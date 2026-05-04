@@ -1,0 +1,38 @@
+name: Deploy preview to GitHub Pages
+
+on:
+  push:
+    branches: [main, "cursor/sport-rpg-pixel-app-0aff"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Stage preview as site root
+        run: |
+          mkdir -p _site
+          cp -r preview/* _site/
+          # Page d'index racine pour clarifier (au cas où)
+          ls _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
