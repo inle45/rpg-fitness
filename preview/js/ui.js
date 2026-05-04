@@ -639,6 +639,32 @@
     }
   });
 
+  // ------ PWA install prompt -----------------------------------------------
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = $('#btnInstall');
+    if (btn) btn.style.display = '';
+  });
+  $('#btnInstall')?.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice.catch(() => null);
+    deferredPrompt = null;
+    $('#btnInstall').style.display = 'none';
+  });
+
+  // Affiche l'astuce d'installation 1 fois sur petit écran
+  if (window.matchMedia('(max-width: 520px)').matches &&
+      !localStorage.getItem('pixelquest_hint_seen')) {
+    $('#installHint').style.display = '';
+  }
+  $('#closeHint')?.addEventListener('click', () => {
+    $('#installHint').style.display = 'none';
+    localStorage.setItem('pixelquest_hint_seen', '1');
+  });
+
   // Init render
   syncAndRender();
   // Lance les tests une fois au démarrage pour confirmer que tout fonctionne

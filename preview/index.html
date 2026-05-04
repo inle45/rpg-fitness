@@ -6,6 +6,9 @@
   <meta name="theme-color" content="#1a1030" />
   <title>PixelQuest – Prévisualisation</title>
   <link rel="stylesheet" href="css/styles.css" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
 </head>
 <body>
   <header class="topbar">
@@ -15,16 +18,24 @@
     </div>
     <div class="controls">
       <label>Pas simulés <input id="simSteps" type="number" min="1" max="500" value="50" /></label>
-      <button id="btnAddSteps">+ Ajouter pas</button>
-      <button id="btnTick">Tick auto (10s)</button>
+      <button id="btnAddSteps">+ Pas</button>
+      <button id="btnTick">Auto</button>
       <label>Date <input id="simDate" type="date" /></label>
-      <button id="btnReset" class="danger">Réinitialiser</button>
+      <button id="btnReset" class="danger">Reset</button>
+      <button id="btnInstall" style="display:none">Installer</button>
     </div>
     <div class="status">
       <span id="syncDot" class="dot ok"></span>
       <span id="syncLabel">Sync ✓ Phone ↔ Watch</span>
     </div>
   </header>
+
+  <div id="installHint" class="install-hint" style="display:none">
+    Astuce : pour avoir PixelQuest comme une vraie appli sur ton Android,
+    ouvre le menu de Chrome (⋮) → « <b>Installer l'application</b> » ou
+    « Ajouter à l'écran d'accueil ».
+    <button id="closeHint">OK</button>
+  </div>
 
   <main class="stage">
     <!-- ============================== PHONE ============================== -->
@@ -165,5 +176,12 @@
   <script src="js/tests.js"></script>
   <script src="js/sync.js"></script>
   <script src="js/ui.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      });
+    }
+  </script>
 </body>
 </html>

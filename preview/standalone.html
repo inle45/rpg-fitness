@@ -1,0 +1,2616 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#1a1030" />
+  <title>PixelQuest – Prévisualisation</title>
+  <style>
+/* PixelQuest – Stylesheet (RPG pixel, sombre, lisible). */
+
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+:root {
+  --bg0: #0e0820;
+  --bg1: #1a1030;
+  --bg2: #261847;
+  --fg:  #f5f1ff;
+  --muted: #b9aee0;
+  --accent: #ffe04a;
+  --accent2: #d36cb0;
+  --good: #2ecc71;
+  --bad:  #e74c3c;
+  --xp:   #6cd0ff;
+  --coin: #ffd34a;
+  --hp:   #ff5d6c;
+  --shadow: 0 0 0 2px #000, 4px 4px 0 #000;
+  --pixel: 'Press Start 2P', monospace;
+  --read:  'VT323', monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--read);
+  background:
+    repeating-linear-gradient(0deg, #0a0618, #0a0618 2px, #0e0820 2px, #0e0820 4px),
+    radial-gradient(circle at 20% 10%, #2b1855, transparent 40%),
+    radial-gradient(circle at 80% 90%, #1c2d6a, transparent 50%),
+    var(--bg0);
+  color: var(--fg);
+  min-height: 100vh;
+  font-size: 18px;
+}
+
+/* Topbar */
+.topbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(#1a1030, #120824);
+  border-bottom: 3px solid #000;
+  box-shadow: 0 2px 0 #261847;
+  position: sticky; top: 0; z-index: 10;
+}
+.brand { font-family: var(--pixel); font-size: 14px; letter-spacing: 1px; }
+.brand .logo { color: var(--accent); margin-right: 4px; }
+.brand .tag { font-family: var(--read); font-size: 14px; color: var(--muted); margin-left: 8px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; }
+.controls label { font-size: 14px; color: var(--muted); display: flex; gap: 4px; align-items:center; }
+.controls input[type=number] { width: 70px; }
+button {
+  font-family: var(--pixel);
+  font-size: 10px; letter-spacing: 1px;
+  background: var(--bg2); color: var(--fg);
+  border: 2px solid #000; border-bottom-width: 4px;
+  padding: 8px 10px; cursor: pointer;
+  box-shadow: 2px 2px 0 #000;
+  image-rendering: pixelated;
+}
+button:hover { filter: brightness(1.1); }
+button:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 #000; }
+button.danger { background: #5a1a1a; }
+input[type=number], input[type=date], input[type=text] {
+  background: #0a0618; color: var(--fg); border: 2px solid #000;
+  font-family: var(--read); font-size: 16px; padding: 4px 6px;
+}
+.status { display:flex; align-items:center; gap:6px; font-size: 14px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); display:inline-block; }
+.dot.ok { background: var(--good); box-shadow: 0 0 6px var(--good); }
+
+.install-hint {
+  background: #2a1855; color: var(--fg);
+  padding: 8px 12px; font-size: 14px;
+  border-bottom: 2px solid #000;
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+}
+.install-hint b { color: var(--accent); }
+.install-hint button { margin-left: auto; }
+
+/* Stage layout */
+.stage {
+  display: grid;
+  grid-template-columns: minmax(320px, 380px) minmax(220px, 260px) minmax(280px, 1fr);
+  gap: 18px; padding: 18px;
+  align-items: start;
+}
+@media (max-width: 980px) {
+  .stage { grid-template-columns: 1fr; gap: 14px; padding: 10px; }
+  .phone-screen { height: 78vh; }
+  .watch-frame { width: 200px; height: 200px; }
+  .debug { max-height: 360px; }
+}
+@media (max-width: 520px) {
+  .topbar { gap: 6px; padding: 6px 8px; }
+  .brand { font-size: 11px; }
+  .brand .tag { display: none; }
+  .controls label { font-size: 12px; }
+  .controls input[type=date] { display: none; }
+  .controls input[type=number] { width: 56px; }
+  button { font-size: 9px; padding: 6px 8px; }
+  .stage { padding: 6px; gap: 10px; }
+  .phone-frame { padding: 8px 6px; border-radius: 22px; }
+  .phone-screen { height: 75vh; border-radius: 14px; }
+  .hud { padding: 6px; gap: 6px; }
+  .hud-portrait { width: 44px; height: 44px; }
+  .tabs { padding: 4px; gap: 3px; }
+  .tab { font-size: 7px; padding: 5px 6px; }
+  .tab-pane { padding: 6px; }
+  .shop-grid, .bestiary-grid, .pets-grid, .achievements-list { grid-template-columns: 1fr; }
+}
+
+.device-label {
+  font-family: var(--pixel); font-size: 10px; color: var(--muted);
+  margin-bottom: 6px; text-align: center;
+}
+.frame {
+  background: #000; padding: 8px;
+  border-radius: 36px;
+  box-shadow: var(--shadow), inset 0 0 0 2px #2a1855;
+}
+.phone-frame { padding: 14px 10px; border-radius: 30px; }
+.watch-frame { padding: 14px; border-radius: 50%; width: 240px; height: 240px; margin: 0 auto; }
+
+.screen {
+  background: linear-gradient(#1a1030,#120824);
+  color: var(--fg);
+  overflow: hidden;
+  border: 2px solid #2a1855;
+  position: relative;
+}
+.phone-screen { width: 100%; height: 720px; border-radius: 22px; display: flex; flex-direction: column; }
+.watch-screen { width: 100%; height: 100%; border-radius: 50%; display: flex; flex-direction: column; }
+
+/* HUD */
+.hud {
+  display: flex; gap: 8px; padding: 8px;
+  background: #0a0618; border-bottom: 2px solid #2a1855;
+}
+.hud-left { display: flex; gap: 8px; flex: 1 1 auto; align-items: flex-start; }
+.hud-portrait {
+  width: 56px; height: 56px;
+  image-rendering: pixelated;
+  background: #2a1855; border: 2px solid #000;
+}
+.hud-info { flex: 1 1 auto; min-width: 0; }
+.hud-name { font-family: var(--pixel); font-size: 10px; margin-bottom: 4px; }
+.hud-bar { margin: 4px 0; }
+.bar { position: relative; height: 14px; background: #000; border: 2px solid #000; overflow: hidden; }
+.bar .fill { height: 100%; transition: width .25s; }
+.bar.xp .fill { background: linear-gradient(90deg,#3aa1ff,#6cd0ff,#a3eaff); }
+.bar.hp .fill { background: linear-gradient(90deg,#7a1a1a,#ff5d6c); }
+.bar span {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--pixel); font-size: 8px; color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+.hud-line { display: flex; gap: 10px; font-size: 14px; align-items: center; flex-wrap: wrap; }
+.hud-line .lvl { color: var(--accent); font-family: var(--pixel); font-size: 9px; }
+.hud-line .coin { color: var(--coin); }
+.steps-today {
+  text-align: right; font-size: 12px;
+  background: #14082a; border: 2px solid #2a1855; padding: 6px;
+  min-width: 80px;
+}
+.steps-today .lbl { color: var(--muted); font-size: 11px; }
+.steps-today .val { font-family: var(--pixel); font-size: 14px; color: var(--accent); }
+.steps-today .threshold { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* Tabs */
+.tabs {
+  display: flex; flex-wrap: wrap; gap: 4px; padding: 6px;
+  background: #0a0618; border-bottom: 2px solid #2a1855;
+}
+.tab {
+  font-size: 8px; padding: 6px 8px;
+  background: #14082a;
+}
+.tab.active { background: var(--accent2); color: #1a1030; }
+.tab-pane { display: none; padding: 10px; overflow-y: auto; flex: 1 1 auto; }
+.tab-pane.active { display: block; }
+.tab-pane h3 { font-family: var(--pixel); font-size: 10px; color: var(--accent); margin: 8px 0; }
+.tab-pane h4 { font-family: var(--pixel); font-size: 9px; color: var(--muted); margin: 6px 0; }
+
+/* Map */
+.map-container { display: flex; flex-direction: column; gap: 8px; }
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 1px; background: #000; padding: 2px;
+  width: 100%; aspect-ratio: 1;
+}
+.map-cell { position: relative; image-rendering: pixelated; background-size: cover; }
+.map-cell .marker {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; text-shadow: 0 0 4px #000;
+}
+.map-legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--muted); }
+.map-legend .t { display:inline-block; width: 12px; height: 12px; border: 1px solid #000; vertical-align: middle; margin-right: 4px; }
+.map-legend .t.grass { background:#3a6f2a; }
+.map-legend .t.forest{ background:#1f4a17; }
+.map-legend .t.water { background:#3498db; }
+.map-legend .t.sand  { background:#e6c98a; }
+.map-legend .t.stone { background:#7f8c8d; }
+
+.dialogue {
+  background: #0a0618; border: 2px solid #2a1855; padding: 8px;
+  font-size: 16px; line-height: 1.3; min-height: 56px;
+}
+.dialogue .who { font-family: var(--pixel); font-size: 9px; color: var(--accent); display:block; margin-bottom: 4px; }
+
+/* Quêtes */
+.quest-list { display: flex; flex-direction: column; gap: 6px; }
+.quest {
+  background: #0a0618; border: 2px solid #2a1855; padding: 8px;
+}
+.quest .qhead { display:flex; justify-content:space-between; align-items:center; }
+.quest .qname { font-family: var(--pixel); font-size: 10px; }
+.quest .qprog { font-size: 12px; color: var(--muted); }
+.quest .qbar { height: 8px; background: #000; margin: 4px 0; }
+.quest .qbar .qfill { height: 100%; background: var(--good); }
+.quest .qact { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
+
+/* Shop / Inventory */
+.shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.item {
+  background: #0a0618; border: 2px solid #2a1855; padding: 6px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.item .iname { font-family: var(--pixel); font-size: 9px; }
+.item .iprice { color: var(--coin); font-size: 12px; }
+.item .idesc { color: var(--muted); font-size: 12px; }
+.item button { font-size: 8px; padding: 4px 6px; }
+
+.hint { color: var(--bad); font-size: 14px; }
+
+/* Bestiary */
+.bestiary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.bestiary-card {
+  background: #0a0618; border: 2px solid #2a1855; padding: 6px;
+  display: flex; gap: 6px; align-items: center;
+}
+.bestiary-card canvas { image-rendering: pixelated; }
+.bestiary-card .info { flex: 1 1 auto; min-width: 0; }
+.bestiary-card .name { font-family: var(--pixel); font-size: 9px; }
+.bestiary-card .meta { font-size: 12px; color: var(--muted); }
+.bestiary-card.locked { filter: grayscale(1) brightness(0.5); }
+
+/* Pets */
+.pets-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.pet-card {
+  background: #0a0618; border: 2px solid #2a1855; padding: 6px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.egg-status {
+  background: #14082a; border: 2px solid #d36cb0; padding: 8px;
+  margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+}
+
+/* Raid */
+.raid-card {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 8px; background: #0a0618; border: 2px solid var(--bad);
+}
+.raid-card canvas { image-rendering: pixelated; }
+.raid-card .raid-name { font-family: var(--pixel); font-size: 12px; color: var(--accent); }
+.raid-bar { width: 100%; height: 18px; background: #000; border: 2px solid #000; position: relative; }
+.raid-bar .rfill { height: 100%; background: linear-gradient(90deg,#7a1a1a,#ff5d6c); transition: width .3s; }
+.raid-bar span {
+  position: absolute; inset: 0; display:flex; align-items:center; justify-content:center;
+  font-family: var(--pixel); font-size: 9px; color: #fff; text-shadow: 1px 1px 0 #000;
+}
+.raid-info { font-size: 14px; color: var(--muted); text-align: center; }
+
+/* Personnage */
+#phoneCharBuilder { display: flex; flex-direction: column; gap: 10px; }
+.char-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.char-row label { font-family: var(--pixel); font-size: 9px; color: var(--muted); }
+.class-grid, .hair-grid, .color-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.class-card, .swatch {
+  background: #0a0618; border: 2px solid #2a1855; padding: 6px;
+  cursor: pointer; text-align: center;
+}
+.class-card.active, .swatch.active { border-color: var(--accent); background: #2a1855; }
+.swatch { padding: 16px; }
+.preview-hero {
+  align-self: center;
+  background: #2a1855; border: 2px solid #000; padding: 8px;
+}
+.preview-hero canvas { image-rendering: pixelated; }
+
+/* Achievements */
+.achievements-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.ach { background: #0a0618; border: 2px solid #2a1855; padding: 6px; font-size: 13px; }
+.ach.locked { opacity: 0.4; }
+.ach.unlocked { border-color: var(--accent); }
+.ach .aname { font-family: var(--pixel); font-size: 9px; }
+
+/* Watch */
+.watch-content {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 6px; text-align: center;
+}
+.watch-content canvas { image-rendering: pixelated; }
+.watch-content .w-row { display: flex; align-items: center; gap: 4px; }
+.watch-content .w-num { font-family: var(--pixel); font-size: 12px; color: var(--accent); }
+.watch-content .w-lbl { font-size: 11px; color: var(--muted); }
+.watch-bar { width: 80%; height: 8px; background: #000; border: 1px solid #000; margin: 3px auto; position: relative; }
+.watch-bar .fill { height: 100%; background: linear-gradient(90deg,#3aa1ff,#6cd0ff); }
+.watch-tabs {
+  display: flex; gap: 2px; padding: 2px; justify-content: center;
+}
+.wtab { font-size: 8px; padding: 4px 6px; min-width: 24px; }
+.wtab.active { background: var(--accent); color: #1a1030; }
+
+/* Debug */
+.debug {
+  background: #0a0618; border: 2px solid #2a1855; padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  font-size: 14px; min-height: 200px; max-height: 720px;
+}
+.debug h3 { font-family: var(--pixel); font-size: 11px; color: var(--accent); margin: 0; }
+.debug h4 { font-family: var(--pixel); font-size: 9px; color: var(--muted); margin: 4px 0 0; }
+.debug-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.debug-log {
+  background: #000; color: #aef0c1; border: 2px solid #2a1855;
+  padding: 8px; flex: 1 1 auto; overflow-y: auto;
+  font-family: var(--read); font-size: 14px; line-height: 1.3;
+  white-space: pre-wrap; word-break: break-word;
+  margin: 0;
+}
+.debug-log.small { font-size: 13px; max-height: 120px; }
+.debug-log .ok  { color: #2ecc71; }
+.debug-log .ko  { color: #ff5d6c; }
+.debug-log .fix { color: #ffe04a; }
+.debug-log .info{ color: #6cd0ff; }
+
+</style>
+  </head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">⚔︎</span> PixelQuest
+      <span class="tag">RPG · Pas · Aventure</span>
+    </div>
+    <div class="controls">
+      <label>Pas simulés <input id="simSteps" type="number" min="1" max="500" value="50" /></label>
+      <button id="btnAddSteps">+ Pas</button>
+      <button id="btnTick">Auto</button>
+      <label>Date <input id="simDate" type="date" /></label>
+      <button id="btnReset" class="danger">Reset</button>
+      <button id="btnInstall" style="display:none">Installer</button>
+    </div>
+    <div class="status">
+      <span id="syncDot" class="dot ok"></span>
+      <span id="syncLabel">Sync ✓ Phone ↔ Watch</span>
+    </div>
+  </header>
+
+  <div id="installHint" class="install-hint" style="display:none">
+    Astuce : pour avoir PixelQuest comme une vraie appli sur ton Android,
+    ouvre le menu de Chrome (⋮) → « <b>Installer l'application</b> » ou
+    « Ajouter à l'écran d'accueil ».
+    <button id="closeHint">OK</button>
+  </div>
+
+  <main class="stage">
+    <!-- ============================== PHONE ============================== -->
+    <section class="device phone" aria-label="Aperçu téléphone">
+      <div class="device-label">Téléphone Android</div>
+      <div class="frame phone-frame">
+        <div class="screen phone-screen" id="phoneScreen">
+          <!-- HUD -->
+          <div class="hud">
+            <div class="hud-left">
+              <canvas class="hud-portrait" id="phoneHero" width="16" height="16"></canvas>
+              <div class="hud-info">
+                <div class="hud-name" id="phoneName">Aventurier</div>
+                <div class="hud-bar">
+                  <div class="bar xp"><div id="phoneXpFill" class="fill"></div><span id="phoneXpLabel">XP</span></div>
+                </div>
+                <div class="hud-line">
+                  <span class="lvl">Niv. <b id="phoneLvl">1</b></span>
+                  <span class="coin">🪙 <b id="phoneCoins">0</b></span>
+                  <span class="weather" id="phoneWeather"></span>
+                </div>
+              </div>
+            </div>
+            <div class="hud-right">
+              <div class="steps-today">
+                <div class="lbl">Pas du jour</div>
+                <div class="val" id="phoneDailySteps">0</div>
+                <div class="threshold" id="phoneThreshold">Seuil 8000 : –</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabs -->
+          <nav class="tabs">
+            <button class="tab active" data-tab="map">Carte</button>
+            <button class="tab" data-tab="quests">Quêtes</button>
+            <button class="tab" data-tab="shop">Boutique</button>
+            <button class="tab" data-tab="bestiary">Bestiaire</button>
+            <button class="tab" data-tab="pets">Familiers</button>
+            <button class="tab" data-tab="raid">Raid</button>
+            <button class="tab" data-tab="char">Personnage</button>
+            <button class="tab" data-tab="achievements">Succès</button>
+          </nav>
+
+          <!-- Tab content -->
+          <div class="tab-pane active" data-pane="map">
+            <div class="map-container">
+              <div class="map-grid" id="phoneMap"></div>
+              <div class="map-legend">
+                <span><i class="t grass"></i> Plaines</span>
+                <span><i class="t forest"></i> Forêt</span>
+                <span><i class="t water"></i> Eau</span>
+                <span><i class="t sand"></i> Sable</span>
+                <span><i class="t stone"></i> Pierre</span>
+              </div>
+              <div class="dialogue" id="phoneDialogue"></div>
+            </div>
+          </div>
+
+          <div class="tab-pane" data-pane="quests">
+            <h3>Quêtes actives</h3>
+            <div id="phoneActiveQuests" class="quest-list"></div>
+            <h3>Disponibles</h3>
+            <div id="phoneAvailableQuests" class="quest-list"></div>
+          </div>
+
+          <div class="tab-pane" data-pane="shop">
+            <h3>Boutique – Hilda la Taverniere</h3>
+            <div id="phoneShop" class="shop-grid"></div>
+            <h3>Inventaire (<span id="phoneInvCount">0</span>/40)</h3>
+            <div id="phoneInv" class="shop-grid"></div>
+            <p class="hint" id="phoneEncumbered"></p>
+          </div>
+
+          <div class="tab-pane" data-pane="bestiary">
+            <h3>Bestiaire</h3>
+            <div id="phoneBestiary" class="bestiary-grid"></div>
+          </div>
+
+          <div class="tab-pane" data-pane="pets">
+            <h3>Familiers</h3>
+            <div id="phoneEgg" class="egg-status"></div>
+            <div id="phonePets" class="pets-grid"></div>
+          </div>
+
+          <div class="tab-pane" data-pane="raid">
+            <h3>Raid hebdomadaire</h3>
+            <div class="raid-card" id="phoneRaid"></div>
+          </div>
+
+          <div class="tab-pane" data-pane="char">
+            <h3>Création / Personnage</h3>
+            <div id="phoneCharBuilder"></div>
+          </div>
+
+          <div class="tab-pane" data-pane="achievements">
+            <h3>Succès</h3>
+            <div id="phoneAchievements" class="achievements-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== WATCH ============================== -->
+    <section class="device watch" aria-label="Aperçu Wear OS">
+      <div class="device-label">Wear OS</div>
+      <div class="frame watch-frame">
+        <div class="screen watch-screen" id="watchScreen">
+          <div class="watch-content" id="watchContent">
+            <!-- contenu rendu en JS -->
+          </div>
+          <nav class="watch-tabs">
+            <button class="wtab active" data-wtab="main">●</button>
+            <button class="wtab" data-wtab="quest">⚑</button>
+            <button class="wtab" data-wtab="raid">⚔</button>
+            <button class="wtab" data-wtab="pet">★</button>
+          </nav>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== DEBUG ============================== -->
+    <aside class="debug" aria-label="Panneau debug">
+      <h3>Debugger auto-correctif</h3>
+      <div class="debug-actions">
+        <button id="btnRunTests">▶ Lancer tests</button>
+        <button id="btnAutoFix">⚙ Auto-fix</button>
+        <button id="btnExport">⤓ Exporter état</button>
+      </div>
+      <pre id="debugLog" class="debug-log">Prêt.</pre>
+      <h4>Anti-triche – flags récents</h4>
+      <pre id="cheatLog" class="debug-log small"></pre>
+    </aside>
+  </main>
+<script>
+// === js/engine.js ===
+/* PixelQuest – Moteur de jeu (preview JS).
+ * Toute la logique métier est ici. Elle est conçue pour être 1:1 avec la
+ * version Kotlin partagée (android/shared). Les noms de fonctions, formules
+ * et structures de données sont volontairement identiques.
+ */
+(function (global) {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Constantes de game design
+  // ---------------------------------------------------------------------------
+  const CONFIG = {
+    XP_BASE: 100,
+    XP_GROWTH: 1.18,            // courbe exponentielle
+    XP_PER_STEP: 1,             // 1 pas = 1 XP de base
+    COIN_PER_100_STEPS: 5,      // 100 pas = 5 pièces
+    DAILY_BONUS_THRESHOLD: 8000,
+    DAILY_BONUS_MULT: 2.0,
+    INVENTORY_SOFT_CAP: 25,     // au-delà : malus encombrement
+    INVENTORY_HARD_CAP: 40,
+    ENCUMBRANCE_PENALTY: 1.10,  // 110 pas pour 100 XP
+    MAX_STEPS_PER_MINUTE: 220,  // anti-triche : seuil humain max
+    MAX_STEPS_PER_SECOND: 5,    // ~300/min en sprint, on coupe à 5/s
+    SUSPICIOUS_BURST: 500,      // saut soudain suspect
+    WEEKLY_BOSS_BASE_HP: 75000,
+    RAID_RESET_DOW: 1,          // lundi (ISO : 1)
+    WORLD_TILES_PER_STEP: 0.02, // 50 pas = 1 tuile
+  };
+
+  // ---------------------------------------------------------------------------
+  // Données statiques (catalogues)
+  // ---------------------------------------------------------------------------
+  const CLASSES = [
+    { id: 'guerrier', name: 'Guerrier',  desc: '+10% PV, robuste', sprite: 'hero_warrior' },
+    { id: 'mage',     name: 'Mage',      desc: '+10% XP sur quêtes mentales', sprite: 'hero_mage' },
+    { id: 'rodeur',   name: 'Rôdeur',    desc: '+5% pièces par pas', sprite: 'hero_ranger' },
+    { id: 'barde',    name: 'Barde',     desc: '+1 dialogue easter egg', sprite: 'hero_bard' },
+  ];
+
+  const HAIRSTYLES = ['short', 'long', 'mohawk', 'ponytail', 'bald', 'curly'];
+  const SKIN_TONES = ['#f4c79a', '#d39660', '#a06840', '#5c3a1e', '#f7d8b2', '#e8b27a'];
+  const HAIR_COLORS = ['#2a1a0d', '#8b4513', '#d4a017', '#c0392b', '#e8e8e8', '#5b2a83'];
+
+  const NPCS = [
+    {
+      id: 'taverniere',
+      name: 'Hilda la Taverniere',
+      sprite: 'npc_tavern',
+      bio: 'Tient la Taverne du Pas-Vert. Achète vos objets, vous repose.',
+      dialogues: [
+        'Encore toi ? Marche un peu et reviens avec des sous !',
+        'On dit qu\'au-delà de 10 000 pas, le ciel pleut des pièces.',
+        'Easter egg : tape « konami » dans la console pour un cadeau.',
+      ],
+    },
+    {
+      id: 'forgeron',
+      name: 'Brom le Forgeron',
+      sprite: 'npc_smith',
+      bio: 'Forge des armes à partir de minerais récoltés en marchant.',
+      dialogues: [
+        'Apporte-moi du minerai et je te ferai trembler les boss.',
+        'Le Dragon de Fer ? Je l\'ai vu une fois, j\'ai couru.',
+      ],
+    },
+    {
+      id: 'sage',
+      name: 'Mira la Sage',
+      sprite: 'npc_sage',
+      bio: 'Donne les quêtes principales et les énigmes.',
+      dialogues: [
+        'Le vrai voyage, c\'est celui des pas.',
+        'Si tu marches sans bouger, le système le saura.',
+      ],
+    },
+    {
+      id: 'eleveur',
+      name: 'Pip l\'Éleveur',
+      sprite: 'npc_breeder',
+      bio: 'Couve les œufs et apprivoise les familiers.',
+      dialogues: [
+        'Cet œuf éclora dans 5000 pas, sois patient.',
+        'Mon cochon-licorne ? Une légende vivante.',
+      ],
+    },
+  ];
+
+  const MONSTERS = [
+    { id: 'slime',     name: 'Slime baveux',   hp: 50,   xp: 20,  loot: ['gel', 'piece'],         tier: 1, sprite: 'mob_slime' },
+    { id: 'gobelin',   name: 'Gobelin',        hp: 120,  xp: 60,  loot: ['cuir', 'piece'],        tier: 2, sprite: 'mob_goblin' },
+    { id: 'loup',      name: 'Loup d\'ombre',  hp: 200,  xp: 110, loot: ['croc', 'fourrure'],     tier: 3, sprite: 'mob_wolf' },
+    { id: 'golem',     name: 'Golem de Pierre',hp: 500,  xp: 300, loot: ['minerai', 'cristal'],   tier: 4, sprite: 'mob_golem' },
+  ];
+
+  const RAID_BOSSES = [
+    { id: 'dragon_fer', name: 'Dragon de Fer',     hp: 75000,  reward: 'epee_titan' },
+    { id: 'liche',      name: 'Liche du Crépuscule',hp: 90000, reward: 'sceptre_obscur' },
+    { id: 'kraken',     name: 'Kraken des Sables', hp: 110000, reward: 'trident_dunes' },
+  ];
+
+  const SHOP_ITEMS = [
+    { id: 'potion_pv',     name: 'Potion de Vie',         price: 25,   type: 'consumable', desc: 'Restaure 50 PV.' },
+    { id: 'potion_xp',     name: 'Élixir d\'XP (+10%, 1h)', price: 120, type: 'buff',       desc: 'Boost XP temporaire.' },
+    { id: 'sac_grand',     name: 'Grand Sac (+5 slots)',  price: 400,  type: 'upgrade',    desc: 'Augmente l\'inventaire.' },
+    { id: 'oeuf_mystere',  name: 'Œuf Mystère',           price: 250,  type: 'pet',        desc: 'À couver en marchant.' },
+    { id: 'epee_bois',     name: 'Épée en Bois',          price: 80,   type: 'weapon',     desc: '+5 dégâts.' },
+    { id: 'epee_fer',      name: 'Épée en Fer',           price: 350,  type: 'weapon',     desc: '+15 dégâts.' },
+    { id: 'baton_eclat',   name: 'Bâton d\'Éclat',        price: 280,  type: 'weapon',     desc: '+12 magie.' },
+    { id: 'cape_voyageur', name: 'Cape du Voyageur',      price: 200,  type: 'armor',      desc: '-1 encombrement.' },
+  ];
+
+  const PETS = [
+    { id: 'slimon',   name: 'Slimon',   hatchSteps: 3000,  sprite: 'pet_slime',  trait: '+1 pièce / 100 pas' },
+    { id: 'foxy',     name: 'Foxy',     hatchSteps: 6000,  sprite: 'pet_fox',    trait: '+2% XP global' },
+    { id: 'griffon',  name: 'Griffon',  hatchSteps: 12000, sprite: 'pet_griff',  trait: '-5% encombrement' },
+    { id: 'pixiel',   name: 'Pixiel',   hatchSteps: 20000, sprite: 'pet_pixiel', trait: 'Détecte les easter eggs' },
+  ];
+
+  const ACHIEVEMENTS = [
+    { id: 'premiers_pas',   name: 'Premiers Pas',       cond: s => s.totalSteps >= 100 },
+    { id: 'marathonien',    name: 'Marathonien',        cond: s => s.totalSteps >= 42195 },
+    { id: 'niveau_10',      name: 'Niveau 10',          cond: s => s.level >= 10 },
+    { id: 'niveau_25',      name: 'Maître Aventurier',  cond: s => s.level >= 25 },
+    { id: 'collectionneur', name: 'Collectionneur',     cond: s => Object.keys(s.bestiary).length >= MONSTERS.length },
+    { id: 'eleveur',        name: 'Éleveur Expert',     cond: s => s.pets.filter(p=>p.hatched).length >= 2 },
+    { id: 'tueur_boss',     name: 'Tueur de Boss',      cond: s => (s.raidsWon||0) >= 1 },
+    { id: 'riche',          name: 'Riche du Royaume',   cond: s => s.coins >= 5000 },
+    { id: 'huit_mille',     name: 'Au-delà du Seuil',   cond: s => (s.dailyStepsBest||0) >= CONFIG.DAILY_BONUS_THRESHOLD },
+  ];
+
+  const SEASONS = ['printemps', 'ete', 'automne', 'hiver'];
+  const WEATHERS = [
+    { id: 'soleil',  name: 'Soleil',     mod: { xp: 1.05, coin: 1.0 }, sprite: 'wx_sun' },
+    { id: 'pluie',   name: 'Pluie',      mod: { xp: 0.95, coin: 1.10 }, sprite: 'wx_rain' },
+    { id: 'orage',   name: 'Orage',      mod: { xp: 1.15, coin: 0.90 }, sprite: 'wx_storm' },
+    { id: 'neige',   name: 'Neige',      mod: { xp: 1.00, coin: 1.05 }, sprite: 'wx_snow' },
+    { id: 'brume',   name: 'Brume',      mod: { xp: 1.10, coin: 1.0 }, sprite: 'wx_fog' },
+  ];
+
+  // ---------------------------------------------------------------------------
+  // Quêtes
+  // ---------------------------------------------------------------------------
+  const QUEST_TEMPLATES = [
+    { id: 'q_walk_500',  giver: 'taverniere', name: 'Petite balade',  goal: 500,  reward: { xp: 60,  coin: 30 } },
+    { id: 'q_walk_2000', giver: 'taverniere', name: 'Tour du village',goal: 2000, reward: { xp: 250, coin: 120 } },
+    { id: 'q_walk_5000', giver: 'sage',       name: 'Pèlerinage',     goal: 5000, reward: { xp: 700, coin: 250 } },
+    { id: 'q_walk_8000', giver: 'sage',       name: 'Au-delà du Seuil',goal: 8000, reward: { xp: 1500, coin: 500 } },
+    { id: 'q_kill_slime',giver: 'forgeron',   name: 'Premier sang',   goal: 3,    reward: { xp: 200, coin: 80 }, type:'kill', target:'slime' },
+    { id: 'q_hatch_pet', giver: 'eleveur',    name: 'Premier familier',goal:1,    reward: { xp: 400, coin: 150 }, type:'hatch' },
+  ];
+
+  // ---------------------------------------------------------------------------
+  // État par défaut
+  // ---------------------------------------------------------------------------
+  function defaultState() {
+    return {
+      version: 1,
+      character: null,             // {name, classId, hair, hairColor, skin}
+      level: 1,
+      xp: 0,
+      totalSteps: 0,
+      lifetimeSteps: 0,
+      coins: 50,
+      // Sessions de pas (anti-triche)
+      stepEvents: [],              // [{t, n}]
+      // Inventaire & équipement
+      inventory: [],               // [{id, qty}]
+      equipped: { weapon: null, armor: null },
+      // Familiers
+      pets: [],                    // [{id, hatched:bool, progress:steps}]
+      eggIncubating: null,         // {petId, steps}
+      // Quêtes
+      activeQuests: [],            // {id, progress}
+      completedQuests: [],
+      // Bestiaire (kills)
+      bestiary: {},                // {monsterId: count}
+      // Achievements
+      achievements: [],            // [id]
+      // Raid
+      raid: { bossId: 'dragon_fer', hp: CONFIG.WEEKLY_BOSS_BASE_HP, week: weekKey(), participated: 0 },
+      raidsWon: 0,
+      // Météo & saison
+      weatherId: 'soleil',
+      weatherDay: dayKey(),
+      // Carte
+      pos: { x: 4, y: 4 },         // tuile sur la grille du monde
+      worldStepsBuffer: 0,
+      // Quotidien
+      dailySteps: 0,
+      dailyStepsBest: 0,
+      dailyKey: dayKey(),
+      doubledToday: false,
+      // Anti-cheat
+      flags: [],
+    };
+  }
+
+  function dayKey(d) {
+    d = d || new Date();
+    return d.getUTCFullYear() + '-' + (d.getUTCMonth()+1) + '-' + d.getUTCDate();
+  }
+  function weekKey(d) {
+    d = d || new Date();
+    const onejan = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    const week = Math.ceil((((d - onejan) / 86400000) + onejan.getUTCDay()+1)/7);
+    return d.getUTCFullYear() + '-W' + week;
+  }
+  function seasonNow(d) {
+    d = d || new Date();
+    const m = d.getUTCMonth();
+    if (m<2 || m===11) return 'hiver';
+    if (m<5) return 'printemps';
+    if (m<8) return 'ete';
+    return 'automne';
+  }
+
+  // ---------------------------------------------------------------------------
+  // Calculs (purs, testables)
+  // ---------------------------------------------------------------------------
+  function xpForLevel(level) {
+    // Coût pour passer de `level` à `level+1`. Exponentiel.
+    return Math.floor(CONFIG.XP_BASE * Math.pow(CONFIG.XP_GROWTH, level - 1));
+  }
+  function totalXpToReach(level) {
+    let s = 0;
+    for (let i = 1; i < level; i++) s += xpForLevel(i);
+    return s;
+  }
+  function levelFromTotalXp(totalXp) {
+    let lvl = 1, cum = 0;
+    while (cum + xpForLevel(lvl) <= totalXp) { cum += xpForLevel(lvl); lvl++; if (lvl > 999) break; }
+    return { level: lvl, xpInLevel: totalXp - cum, xpForNext: xpForLevel(lvl) };
+  }
+
+  function inventoryWeight(state) {
+    return state.inventory.reduce((a, it) => a + it.qty, 0);
+  }
+  function isEncumbered(state) {
+    return inventoryWeight(state) >= CONFIG.INVENTORY_SOFT_CAP;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Anti-triche : valide un lot de pas avant ingestion
+  // ---------------------------------------------------------------------------
+  function validateSteps(state, n, now) {
+    now = now || Date.now();
+    const issues = [];
+    if (!Number.isFinite(n) || n < 0) return { ok:false, accepted:0, issues:['valeur invalide'] };
+    if (n > CONFIG.SUSPICIOUS_BURST) {
+      issues.push('burst suspect (>'+CONFIG.SUSPICIOUS_BURST+' pas en un coup)');
+    }
+    // Cadence : pas plus de MAX_STEPS_PER_MINUTE sur 60s glissantes.
+    const oneMinuteAgo = now - 60000;
+    const recent = state.stepEvents.filter(e => e.t >= oneMinuteAgo).reduce((a,e)=>a+e.n, 0);
+    if (recent + n > CONFIG.MAX_STEPS_PER_MINUTE) {
+      issues.push('cadence > '+CONFIG.MAX_STEPS_PER_MINUTE+' pas/min');
+    }
+    // Cadence ultra-courte 1s
+    const oneSecAgo = now - 1000;
+    const veryRecent = state.stepEvents.filter(e => e.t >= oneSecAgo).reduce((a,e)=>a+e.n, 0);
+    if (veryRecent + n > CONFIG.MAX_STEPS_PER_SECOND * 5) {
+      issues.push('cadence > '+(CONFIG.MAX_STEPS_PER_SECOND*5)+' pas/s');
+    }
+    // Si suspect : on accepte mais on cap à un plafond raisonnable
+    let accepted = n;
+    if (issues.length) {
+      const allowed = Math.max(0, CONFIG.MAX_STEPS_PER_MINUTE - recent);
+      accepted = Math.min(n, allowed);
+    }
+    return { ok: issues.length === 0, accepted, issues };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Application d'un lot de pas valides
+  // ---------------------------------------------------------------------------
+  function ingestSteps(state, rawN, now) {
+    now = now || Date.now();
+    rotateDayIfNeeded(state, now);
+    rotateWeekIfNeeded(state, now);
+    rotateWeatherIfNeeded(state, now);
+
+    const v = validateSteps(state, rawN, now);
+    if (v.issues.length) state.flags.push({ t: now, issues: v.issues, raw: rawN, kept: v.accepted });
+
+    let n = v.accepted;
+    if (n <= 0) return { gainedXp:0, gainedCoins:0, levelUps:[], issues:v.issues };
+
+    // Encombrement : 110 pas pour 100 XP
+    let effectiveSteps = n;
+    if (isEncumbered(state)) {
+      effectiveSteps = Math.floor(n / CONFIG.ENCUMBRANCE_PENALTY);
+    }
+
+    // Multiplicateurs
+    const weather = WEATHERS.find(w=>w.id===state.weatherId) || WEATHERS[0];
+    let xpMult = weather.mod.xp;
+    let coinMult = weather.mod.coin;
+
+    // Classe
+    const klass = state.character ? CLASSES.find(c=>c.id===state.character.classId) : null;
+    if (klass && klass.id === 'rodeur') coinMult *= 1.05;
+
+    // Familiers
+    state.pets.forEach(p => {
+      const def = PETS.find(P=>P.id===p.id);
+      if (p.hatched && def) {
+        if (def.id==='foxy') xpMult *= 1.02;
+        if (def.id==='slimon') coinMult *= 1.0;
+      }
+    });
+
+    // Seuil journalier
+    if (state.dailySteps >= CONFIG.DAILY_BONUS_THRESHOLD) {
+      xpMult *= CONFIG.DAILY_BONUS_MULT;
+      state.doubledToday = true;
+    }
+
+    let gainedXp = Math.floor(effectiveSteps * CONFIG.XP_PER_STEP * xpMult);
+    let coinsRaw = effectiveSteps * (CONFIG.COIN_PER_100_STEPS / 100) * coinMult;
+    if (klass && klass.id==='rodeur') coinsRaw *= 1.0;
+    let gainedCoins = Math.floor(coinsRaw);
+
+    // Pet slimon bonus
+    if (state.pets.some(p=>p.id==='slimon' && p.hatched)) {
+      gainedCoins += Math.floor(effectiveSteps / 100);
+    }
+
+    // Application
+    state.totalSteps += n;
+    state.lifetimeSteps += n;
+    state.dailySteps += n;
+    if (state.dailySteps > state.dailyStepsBest) state.dailyStepsBest = state.dailySteps;
+    state.stepEvents.push({ t: now, n });
+    if (state.stepEvents.length > 200) state.stepEvents = state.stepEvents.slice(-200);
+
+    state.coins += gainedCoins;
+    const before = state.level;
+    addXp(state, gainedXp);
+    const levelUps = [];
+    while (state.level > before + levelUps.length) levelUps.push(state.level);
+
+    // Quêtes de marche & raid & couvée & monde
+    state.activeQuests.forEach(q => {
+      const tpl = QUEST_TEMPLATES.find(t=>t.id===q.id);
+      if (!tpl) return;
+      if (!tpl.type || tpl.type === undefined) {
+        q.progress = Math.min(tpl.goal, q.progress + n);
+      }
+    });
+    // Raid : chaque pas = 1 dégât
+    if (state.raid && state.raid.hp > 0) {
+      const dmg = n; // 1 pas = 1 PV
+      state.raid.hp = Math.max(0, state.raid.hp - dmg);
+      state.raid.participated += n;
+      if (state.raid.hp === 0) {
+        state.raidsWon = (state.raidsWon || 0) + 1;
+        const boss = RAID_BOSSES.find(b=>b.id===state.raid.bossId);
+        if (boss) addItem(state, boss.reward, 1);
+      }
+    }
+    // Œuf en couvée
+    if (state.eggIncubating) {
+      state.eggIncubating.steps += n;
+      const def = PETS.find(p=>p.id===state.eggIncubating.petId);
+      if (def && state.eggIncubating.steps >= def.hatchSteps) {
+        state.pets.push({ id: def.id, hatched: true, progress: def.hatchSteps });
+        // satisfait quête hatch
+        state.activeQuests.forEach(q=>{
+          const tpl = QUEST_TEMPLATES.find(t=>t.id===q.id);
+          if (tpl && tpl.type==='hatch') q.progress = tpl.goal;
+        });
+        state.eggIncubating = null;
+      }
+    }
+    // Carte : déplacer le héros
+    state.worldStepsBuffer += n;
+    while (state.worldStepsBuffer >= 50) {
+      state.worldStepsBuffer -= 50;
+      stepWorld(state);
+    }
+
+    // Achievements
+    refreshAchievements(state);
+
+    return { gainedXp, gainedCoins, levelUps, issues: v.issues };
+  }
+
+  function addXp(state, amount) {
+    state.xp += amount;
+    while (state.xp >= xpForLevel(state.level)) {
+      state.xp -= xpForLevel(state.level);
+      state.level += 1;
+    }
+  }
+
+  function rotateDayIfNeeded(state, now) {
+    const today = dayKey(new Date(now));
+    if (state.dailyKey !== today) {
+      state.dailyKey = today;
+      state.dailySteps = 0;
+      state.doubledToday = false;
+    }
+  }
+  function rotateWeekIfNeeded(state, now) {
+    const w = weekKey(new Date(now));
+    if (state.raid.week !== w) {
+      // si non vaincu, on garde quand même la mémoire de l'effort, on reset
+      const idx = (Math.abs(hashStr(w)) % RAID_BOSSES.length);
+      const boss = RAID_BOSSES[idx];
+      state.raid = { bossId: boss.id, hp: boss.hp, week: w, participated: 0 };
+    }
+  }
+  function rotateWeatherIfNeeded(state, now) {
+    const today = dayKey(new Date(now));
+    if (state.weatherDay !== today) {
+      const seed = hashStr(today + (state.character?state.character.name:''));
+      state.weatherId = WEATHERS[Math.abs(seed) % WEATHERS.length].id;
+      state.weatherDay = today;
+    }
+  }
+
+  function hashStr(s) {
+    let h = 0;
+    for (let i=0;i<s.length;i++) { h = (h<<5) - h + s.charCodeAt(i); h |= 0; }
+    return h;
+  }
+
+  function stepWorld(state) {
+    // Déplacement RPG sur grille 9x9. Boucle.
+    // Direction selon hash du tick pour varier.
+    const seed = hashStr(state.totalSteps + ':' + state.dailyKey);
+    const dirs = [[1,0],[0,1],[-1,0],[0,-1]];
+    const d = dirs[Math.abs(seed) % 4];
+    state.pos.x = (state.pos.x + d[0] + 9) % 9;
+    state.pos.y = (state.pos.y + d[1] + 9) % 9;
+  }
+
+  function addItem(state, id, qty) {
+    qty = qty || 1;
+    if (inventoryWeight(state) >= CONFIG.INVENTORY_HARD_CAP) return false;
+    const ex = state.inventory.find(it=>it.id===id);
+    if (ex) ex.qty += qty;
+    else state.inventory.push({ id, qty });
+    return true;
+  }
+  function removeItem(state, id, qty) {
+    qty = qty || 1;
+    const ex = state.inventory.find(it=>it.id===id);
+    if (!ex || ex.qty < qty) return false;
+    ex.qty -= qty;
+    if (ex.qty <= 0) state.inventory = state.inventory.filter(it=>it.id!==id);
+    return true;
+  }
+
+  function buy(state, itemId) {
+    const item = SHOP_ITEMS.find(i=>i.id===itemId);
+    if (!item) return { ok:false, reason:'item inconnu' };
+    if (state.coins < item.price) return { ok:false, reason:'pas assez de pièces' };
+    if (inventoryWeight(state) >= CONFIG.INVENTORY_HARD_CAP) return { ok:false, reason:'inventaire plein' };
+    state.coins -= item.price;
+    addItem(state, item.id, 1);
+    if (item.id === 'oeuf_mystere') {
+      // démarre une couvée si aucune en cours
+      if (!state.eggIncubating) {
+        const idx = Math.abs(hashStr(itemId+state.totalSteps)) % PETS.length;
+        state.eggIncubating = { petId: PETS[idx].id, steps: 0 };
+      }
+    }
+    return { ok:true, item };
+  }
+  function sell(state, itemId) {
+    const item = SHOP_ITEMS.find(i=>i.id===itemId);
+    if (!item) return { ok:false };
+    if (!removeItem(state, itemId, 1)) return { ok:false, reason:'aucun en stock' };
+    const refund = Math.floor(item.price * 0.4);
+    state.coins += refund;
+    return { ok:true, refund };
+  }
+
+  function acceptQuest(state, questId) {
+    if (state.activeQuests.find(q=>q.id===questId)) return false;
+    if (state.completedQuests.includes(questId)) return false;
+    const tpl = QUEST_TEMPLATES.find(t=>t.id===questId);
+    if (!tpl) return false;
+    state.activeQuests.push({ id: questId, progress: 0 });
+    return true;
+  }
+  function turnInQuest(state, questId) {
+    const q = state.activeQuests.find(x=>x.id===questId);
+    if (!q) return { ok:false };
+    const tpl = QUEST_TEMPLATES.find(t=>t.id===questId);
+    if (!tpl) return { ok:false };
+    if (q.progress < tpl.goal) return { ok:false, reason:'objectif non atteint' };
+    state.activeQuests = state.activeQuests.filter(x=>x.id!==questId);
+    state.completedQuests.push(questId);
+    addXp(state, tpl.reward.xp);
+    state.coins += tpl.reward.coin;
+    return { ok:true, reward: tpl.reward };
+  }
+
+  function fight(state, monsterId) {
+    const m = MONSTERS.find(x=>x.id===monsterId);
+    if (!m) return { ok:false };
+    // dégâts du joueur basés sur niveau + arme
+    const weapon = state.equipped.weapon ? SHOP_ITEMS.find(i=>i.id===state.equipped.weapon) : null;
+    const wDmg = weapon ? (weapon.id.includes('fer') ? 15 : weapon.id.includes('eclat') ? 12 : 5) : 2;
+    const dmg = state.level * 4 + wDmg;
+    const win = dmg >= m.hp / 4; // simplifié
+    if (win) {
+      state.bestiary[m.id] = (state.bestiary[m.id] || 0) + 1;
+      addXp(state, m.xp);
+      state.coins += Math.floor(m.xp / 4);
+      // loot aléatoire
+      const lootId = m.loot[Math.abs(hashStr(state.totalSteps+m.id)) % m.loot.length];
+      addItem(state, lootId, 1);
+      state.activeQuests.forEach(q=>{
+        const tpl = QUEST_TEMPLATES.find(t=>t.id===q.id);
+        if (tpl && tpl.type==='kill' && tpl.target===m.id) q.progress = Math.min(tpl.goal, q.progress+1);
+      });
+      refreshAchievements(state);
+    }
+    return { ok: win, monster: m };
+  }
+
+  function refreshAchievements(state) {
+    ACHIEVEMENTS.forEach(a => {
+      if (!state.achievements.includes(a.id) && a.cond(state)) {
+        state.achievements.push(a.id);
+      }
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // API publique
+  // ---------------------------------------------------------------------------
+  global.PixelQuest = {
+    CONFIG, CLASSES, HAIRSTYLES, SKIN_TONES, HAIR_COLORS, NPCS, MONSTERS,
+    RAID_BOSSES, SHOP_ITEMS, PETS, ACHIEVEMENTS, SEASONS, WEATHERS, QUEST_TEMPLATES,
+    defaultState,
+    // calculs
+    xpForLevel, totalXpToReach, levelFromTotalXp,
+    inventoryWeight, isEncumbered,
+    // mutations
+    validateSteps, ingestSteps, addXp,
+    addItem, removeItem,
+    buy, sell,
+    acceptQuest, turnInQuest, fight,
+    refreshAchievements,
+    // utils
+    dayKey, weekKey, seasonNow, hashStr,
+    rotateDayIfNeeded, rotateWeekIfNeeded, rotateWeatherIfNeeded,
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+// === js/sprites.js ===
+/* PixelQuest – Générateur de sprites pixel art (procédural).
+ * Chaque sprite est dessiné sur un canvas 16x16 ou 32x32, puis exporté en
+ * dataURL. Aucune dépendance, tout est CPU.
+ * Les motifs sont volontairement simples mais lisibles.
+ */
+(function (global) {
+  'use strict';
+
+  // helper : crée un canvas pixel art
+  function makeCanvas(size, scale) {
+    scale = scale || 4;
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size;
+    c.style.width = (size*scale)+'px';
+    c.style.height = (size*scale)+'px';
+    c.style.imageRendering = 'pixelated';
+    return c;
+  }
+
+  // grille 16x16 simple : chaque caractère = couleur via palette
+  function drawGrid(ctx, palette, grid) {
+    for (let y=0; y<grid.length; y++) {
+      const row = grid[y];
+      for (let x=0; x<row.length; x++) {
+        const ch = row[x];
+        const col = palette[ch];
+        if (!col) continue;
+        ctx.fillStyle = col;
+        ctx.fillRect(x, y, 1, 1);
+      }
+    }
+  }
+
+  // --- Hero ---------------------------------------------------------------
+  function drawHero(ctx, opts) {
+    opts = opts || {};
+    const skin = opts.skin || '#f4c79a';
+    const hair = opts.hairColor || '#2a1a0d';
+    const cloth = opts.cloth || '#3b6cb0';
+    const boot = '#1e1e1e';
+    const eye = '#0f0f0f';
+    const palette = { '.': null, K: '#000', S: skin, H: hair, C: cloth, B: boot, E: eye, W: '#fff' };
+    // 16x16
+    const grid = [
+      '....KKKKKK......',
+      '...KHHHHHHK.....',
+      '..KHHHHHHHHK....',
+      '..KHSSSSSHHK....',
+      '..KSSSSSSSSK....',
+      '..KSEKSSEKSK....',
+      '..KSSSSSSSSK....',
+      '..KSSKSSKSSK....',
+      '..KKSSKKSSKK....',
+      '...KCCCCCCCK....',
+      '..KCCCCCCCCCK...',
+      '..KCCCSSSCCCK...',
+      '..KCCCCCCCCCK...',
+      '...KCCCKCCCK....',
+      '...KBBBKBBBK....',
+      '...KBBKKBBKK....',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+
+  function classOverlay(ctx, classId) {
+    if (classId==='guerrier') {
+      ctx.fillStyle = '#9e9e9e';
+      ctx.fillRect(13, 7, 1, 7); // épée à droite
+      ctx.fillStyle = '#5a3a1a';
+      ctx.fillRect(13, 13, 2, 1);
+    } else if (classId==='mage') {
+      ctx.fillStyle = '#5b2a83';
+      ctx.fillRect(13, 7, 1, 7); // bâton
+      ctx.fillStyle = '#ffe04a';
+      ctx.fillRect(13, 6, 1, 1); // gemme
+    } else if (classId==='rodeur') {
+      ctx.fillStyle = '#3a6f2a';
+      ctx.fillRect(0, 7, 1, 7); // arc
+      ctx.fillStyle = '#3a6f2a';
+      ctx.fillRect(1, 7, 1, 1);
+      ctx.fillRect(1, 13, 1, 1);
+    } else if (classId==='barde') {
+      ctx.fillStyle = '#c0392b';
+      ctx.fillRect(2, 9, 4, 3); // luth
+      ctx.fillStyle = '#000';
+      ctx.fillRect(3, 10, 2, 1);
+    }
+  }
+
+  // --- NPCs ---------------------------------------------------------------
+  function drawNpc(ctx, kind) {
+    const palettes = {
+      tavern:   { S:'#f4c79a', H:'#c0392b', C:'#8a4a1a', A:'#fff' },
+      smith:    { S:'#d39660', H:'#1e1e1e', C:'#2c2c2c', A:'#999' },
+      sage:     { S:'#e8b27a', H:'#cccccc', C:'#5b2a83', A:'#ffe04a' },
+      breeder:  { S:'#f7d8b2', H:'#d4a017', C:'#3a6f2a', A:'#a06840' },
+    };
+    const p = palettes[kind] || palettes.tavern;
+    const palette = { '.': null, K:'#000', S:p.S, H:p.H, C:p.C, A:p.A, E:'#0f0f0f' };
+    const grid = [
+      '....KKKKKK......',
+      '...KHHHHHHK.....',
+      '..KHSSSSSSHK....',
+      '..KSSSSSSSSK....',
+      '..KSEKSSEKSK....',
+      '..KSSSAASSSK....',
+      '..KSSSSSSSSK....',
+      '..KKSSSSSSKK....',
+      '...KCCCCCCCK....',
+      '..KCCCAACCCCK...',
+      '..KCCCCCCCCCK...',
+      '..KCCCCCCCCCK...',
+      '..KCCCCCCCCCK...',
+      '...KCCCKCCCK....',
+      '...KKKKKKKKK....',
+      '....KK....KK....',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+
+  // --- Mobs ---------------------------------------------------------------
+  function drawSlime(ctx) {
+    const palette = { '.':null, K:'#0a3d2a', G:'#2ecc71', H:'#a7f3c8', E:'#000' };
+    const grid = [
+      '................',
+      '................',
+      '................',
+      '................',
+      '....KKKKKKK.....',
+      '...KGGGGGGGK....',
+      '..KGGHGGHGGGK...',
+      '..KGGGGGGGGGK...',
+      '.KGGGEGGGGEGGK..',
+      '.KGGGGGGGGGGGK..',
+      '.KGGGGGGGGGGGK..',
+      '.KKGGGGGGGGGKK..',
+      '..KKGGGGGGGKK...',
+      '...KKKKKKKKK....',
+      '................',
+      '................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+  function drawGoblin(ctx) {
+    const palette = { '.':null, K:'#000', G:'#6aa84f', D:'#3c5a25', E:'#fff', M:'#c0392b' };
+    const grid = [
+      '....KKKKKK......',
+      '...KGGGGGGK.....',
+      '..KGGGGGGGGK....',
+      '..KGEKGGEKGK....',
+      '..KGGGGGGGGK....',
+      '..KGGMMMGGGK....',
+      '..KGGGGGGGGK....',
+      '...KGGGGGGK.....',
+      '...KDDDDDDK.....',
+      '..KDDDDDDDDK....',
+      '..KDDDDDDDDK....',
+      '..KDDDDDDDDK....',
+      '..KDDDKKDDDK....',
+      '..KDDDKKDDDK....',
+      '..KKDDKKDDKK....',
+      '....KK..KK......',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+  function drawWolf(ctx) {
+    const palette = { '.':null, K:'#000', G:'#3a3a3a', D:'#5a5a5a', E:'#ffe04a', T:'#ffffff' };
+    const grid = [
+      '................',
+      '..K............K',
+      '..KK..........KK',
+      '..KGK........KGK',
+      '..KGGK......KGGK',
+      '..KGGGKKKKKKGGGK',
+      '..KGGEGGGGGGGEGK',
+      '..KGGGGTTGGGGGGK',
+      '..KGGGGGGGGGGGGK',
+      '..KKGGGGGGGGGGKK',
+      '...KGGGGGGGGGK..',
+      '...KKGGGGGGGKK..',
+      '....KGKGGKGGK...',
+      '....KKK.KKK.....',
+      '................',
+      '................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+  function drawGolem(ctx) {
+    const palette = { '.':null, K:'#000', G:'#9e9e9e', D:'#5a5a5a', E:'#ffe04a' };
+    const grid = [
+      '....KKKKKKK.....',
+      '...KGGGGGGGK....',
+      '..KGGGGGGGGGK...',
+      '..KGEGGGGGEGK...',
+      '..KGGGGGGGGGK...',
+      '..KGGGDDDGGGK...',
+      '..KGGGGGGGGGK...',
+      '.KGGGGGGGGGGGK..',
+      'KGGGGGGGGGGGGGK.',
+      'KGGGGGGGGGGGGGK.',
+      'KGGGGGGGGGGGGGK.',
+      '.KGGGGGGGGGGGK..',
+      '..KGGGGKGGGGK...',
+      '..KGGGKKKGGGK...',
+      '..KKGGKKKGGKK...',
+      '....KK...KK.....',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+
+  // --- Boss ---------------------------------------------------------------
+  function drawDragon(ctx) {
+    // 32x32
+    const c = ctx.canvas;
+    const palette = { '.':null, K:'#000', G:'#3b3b3b', D:'#1f1f1f', E:'#ff3b3b', S:'#9e9e9e', F:'#ffe04a' };
+    const grid = [
+      '................................',
+      '................................',
+      '..........KKKKKK................',
+      '.........KGGGGGGGK..............',
+      '........KGGGGGGGGGK.............',
+      '........KGGEGGGGGGGK............',
+      '.......KGGGGGGGGGGGGK...........',
+      '.......KGGGGGGGGGGGGK...........',
+      '.......KGGGGFFGGGGGGK...........',
+      '......KGGGGGGGGGGGGGGK..........',
+      '......KGGGGGGGGGGGGGGK..........',
+      '.....KGGGGGGGGGGGGGGGGK.........',
+      '....KGGGGGGGGGGGGGGGGGGK........',
+      '...KGGGGGGGGGGGGGGGGGGGGK.......',
+      '..KGGGGGGGGGGGGGGGGGGGGGGK......',
+      '.KGGGGGGGGGGGGGGGGGGGGGGGGK.....',
+      'KGGGGGGGGGGGGGGGGGGGGGGGGGGK....',
+      'KGGGGGGGGGGGGGGGGGGGGGGGGGGK....',
+      'KGGGGGGGGGGGGGGGGGGGGGGGGGGK....',
+      'KGGGGGGGGGGGGGGGGGGGGGGGGGGK....',
+      '.KGGGGGGGGGGGGGGGGGGGGGGGGK.....',
+      '..KGGGGGGGGGGGGGGGGGGGGGGK......',
+      '...KGGGGGGGGGGGGGGGGGGGGK.......',
+      '....KGGGGGGGGGGGGGGGGGGK........',
+      '.....KGGGGGGGGGGGGGGGGK.........',
+      '......KGGGGGGGGGGGGGGK..........',
+      '.......KGGGGGGGGGGGGK...........',
+      '........KGGGGGGGGGGK............',
+      '.........KGGGGGGGGK.............',
+      '..........KKKKKKKK..............',
+      '................................',
+      '................................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+
+  // --- Pets ---------------------------------------------------------------
+  function drawPetSlime(ctx)  { drawSlime(ctx); }
+  function drawPetFox(ctx) {
+    const palette = { '.':null, K:'#000', O:'#e67e22', W:'#fff', E:'#000' };
+    const grid = [
+      '................',
+      '................',
+      '....K......K....',
+      '...KOK....KOK...',
+      '..KOOK....KOOK..',
+      '.KOOOKKKKKKOOOK.',
+      '.KOOOOOOOOOOOOK.',
+      '.KOOEOOWWOOEOOK.',
+      '.KOOOOOOOOOOOOK.',
+      '.KOOOWWWOOOOWOK.',
+      '.KKOOOOOOOOOKKK.',
+      '..KOOOOOOOOOK...',
+      '..KOKOOKOOKOK...',
+      '..KK..KK..KK....',
+      '................',
+      '................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+  function drawPetGriffon(ctx) {
+    const palette = { '.':null, K:'#000', G:'#d4a017', B:'#8b4513', E:'#fff' };
+    const grid = [
+      '......KK........',
+      '.....KGGK.......',
+      '....KGGGGK......',
+      '....KGEKGK......',
+      '....KGGGGK......',
+      '....KGGGGKKKKK..',
+      '....KGGGGGGGGGK.',
+      '....KGGGGGGGGGGK',
+      '...KBBBBBBBBBBK.',
+      '..KBBBBBBBBBBK..',
+      '..KBBBBBBBBBK...',
+      '..KBBBKBBBKK....',
+      '..KBKKKBBKK.....',
+      '..KK..KK........',
+      '................',
+      '................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+  function drawPetPixiel(ctx) {
+    const palette = { '.':null, K:'#000', P:'#d36cb0', W:'#fff', G:'#a7f3c8' };
+    const grid = [
+      '......KK........',
+      '.....KPPK.......',
+      '....KPPPPK......',
+      '....KPWKPK......',
+      '....KPPPPK......',
+      '..KK.KPPPK.KK...',
+      '.KGGKKPPKKKGGK..',
+      'KGGGGKPPKGGGGGK.',
+      '.KGGKKPPKKGGK...',
+      '..KK.KPPPK.KK...',
+      '....KPPPPK......',
+      '....KPPPPK......',
+      '....KPKKPK......',
+      '....KK..KK......',
+      '................',
+      '................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+
+  // --- Items / weapons ---------------------------------------------------
+  function drawSword(ctx, color) {
+    color = color || '#9e9e9e';
+    const palette = { '.':null, K:'#000', G:color, B:'#5a3a1a', Y:'#ffe04a' };
+    const grid = [
+      '......KK........',
+      '......KGK.......',
+      '......KGK.......',
+      '......KGK.......',
+      '......KGK.......',
+      '......KGK.......',
+      '......KGK.......',
+      '......KGK.......',
+      '......KGK.......',
+      '....KKBBBKK.....',
+      '....KBYYYBK.....',
+      '....KKBBBKK.....',
+      '......KBK.......',
+      '......KBK.......',
+      '......KKK.......',
+      '................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+  function drawPotion(ctx, color) {
+    color = color || '#e74c3c';
+    const palette = { '.':null, K:'#000', L:color, B:'#5a3a1a', H:'#ffffff' };
+    const grid = [
+      '......KK........',
+      '......KBK.......',
+      '......KBK.......',
+      '.....KKBKK......',
+      '.....KLLLK......',
+      '....KLLLLLK.....',
+      '...KLHLLLLLK....',
+      '...KLLLLLLLK....',
+      '...KLLLLLLLK....',
+      '...KLLLLLLLK....',
+      '...KLLLLLLLK....',
+      '....KLLLLLK.....',
+      '....KKLLLKK.....',
+      '......KKK.......',
+      '................',
+      '................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+  function drawCoin(ctx) {
+    const palette = { '.':null, K:'#000', G:'#ffe04a', D:'#b8860b' };
+    const grid = [
+      '................',
+      '................',
+      '....KKKKKK......',
+      '...KGGGGGGK.....',
+      '..KGGGDDGGGK....',
+      '..KGGDGGDGGK....',
+      '..KGGDGGDGGK....',
+      '..KGGGDDGGGK....',
+      '...KGGGGGGK.....',
+      '....KKKKKK......',
+      '................',
+      '................',
+      '................',
+      '................',
+      '................',
+      '................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+  function drawEgg(ctx) {
+    const palette = { '.':null, K:'#000', S:'#fff8dc', D:'#d4a017', P:'#d36cb0' };
+    const grid = [
+      '................',
+      '................',
+      '......KKKK......',
+      '.....KSSSSSK....',
+      '....KSSSSSSSK...',
+      '....KSPPSSSSK...',
+      '....KSSSSSPSK...',
+      '....KSSPSSSSK...',
+      '....KSSSSSSSK...',
+      '....KSSSSPPSK...',
+      '....KSSSSSSSK...',
+      '....KSSSSSSSK...',
+      '....KKSSSSSKK...',
+      '......KKKK......',
+      '................',
+      '................',
+    ];
+    drawGrid(ctx, palette, grid);
+  }
+
+  // --- Météo --------------------------------------------------------------
+  function drawWeather(ctx, kind) {
+    const c = ctx.canvas;
+    ctx.clearRect(0,0,c.width,c.height);
+    if (kind==='soleil') {
+      ctx.fillStyle = '#ffe04a';
+      ctx.beginPath(); ctx.arc(8,8,4,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#ffaa00';
+      for (let i=0;i<8;i++){
+        const a=i*Math.PI/4;
+        ctx.fillRect(8+Math.cos(a)*6-1, 8+Math.sin(a)*6-1, 2,2);
+      }
+    } else if (kind==='pluie') {
+      ctx.fillStyle = '#888';
+      ctx.fillRect(2,4,12,3);
+      ctx.fillRect(3,7,10,2);
+      ctx.fillStyle = '#3498db';
+      [[4,11],[7,12],[10,11],[6,14],[9,14]].forEach(([x,y])=>ctx.fillRect(x,y,1,2));
+    } else if (kind==='orage') {
+      ctx.fillStyle = '#444';
+      ctx.fillRect(2,3,12,4);
+      ctx.fillStyle = '#ffe04a';
+      ctx.fillRect(7,7,2,3);
+      ctx.fillRect(6,10,3,2);
+      ctx.fillRect(8,12,2,3);
+    } else if (kind==='neige') {
+      ctx.fillStyle = '#ddd';
+      ctx.fillRect(2,3,12,4);
+      ctx.fillStyle = '#fff';
+      [[4,10],[7,11],[10,10],[5,13],[9,13]].forEach(([x,y])=>{
+        ctx.fillRect(x,y,2,2);
+      });
+    } else if (kind==='brume') {
+      ctx.fillStyle = 'rgba(200,200,200,0.9)';
+      ctx.fillRect(1,5,14,2);
+      ctx.fillRect(2,8,12,2);
+      ctx.fillRect(1,11,14,2);
+    }
+  }
+
+  // --- Tile ---------------------------------------------------------------
+  function drawTile(ctx, kind) {
+    const palettes = {
+      grass:  ['#3a6f2a','#2f5d22','#4a8a36'],
+      forest: ['#1f4a17','#143010','#2a6020'],
+      sand:   ['#e6c98a','#d4b06a','#f0d9a0'],
+      water:  ['#3498db','#2980b9','#5dade2'],
+      stone:  ['#7f8c8d','#5d6d6e','#95a5a6'],
+      snow:   ['#ecf0f1','#bdc3c7','#ffffff'],
+    };
+    const p = palettes[kind] || palettes.grass;
+    for (let y=0;y<16;y++){
+      for (let x=0;x<16;x++){
+        const r = (Math.abs((x*7+y*13+(kind||'').length*3)%3));
+        ctx.fillStyle = p[r];
+        ctx.fillRect(x,y,1,1);
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // API publique
+  // ---------------------------------------------------------------------------
+  function makeSprite(kind, opts, size) {
+    size = size || 16;
+    const c = makeCanvas(size, opts && opts.scale ? opts.scale : 4);
+    const ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    if (kind === 'hero') { drawHero(ctx, opts||{}); classOverlay(ctx, opts && opts.classId); }
+    else if (kind === 'npc_tavern')  drawNpc(ctx, 'tavern');
+    else if (kind === 'npc_smith')   drawNpc(ctx, 'smith');
+    else if (kind === 'npc_sage')    drawNpc(ctx, 'sage');
+    else if (kind === 'npc_breeder') drawNpc(ctx, 'breeder');
+    else if (kind === 'mob_slime')   drawSlime(ctx);
+    else if (kind === 'mob_goblin')  drawGoblin(ctx);
+    else if (kind === 'mob_wolf')    drawWolf(ctx);
+    else if (kind === 'mob_golem')   drawGolem(ctx);
+    else if (kind === 'boss_dragon') drawDragon(ctx);
+    else if (kind === 'pet_slime')   drawPetSlime(ctx);
+    else if (kind === 'pet_fox')     drawPetFox(ctx);
+    else if (kind === 'pet_griff')   drawPetGriffon(ctx);
+    else if (kind === 'pet_pixiel')  drawPetPixiel(ctx);
+    else if (kind === 'item_sword')  drawSword(ctx, opts && opts.color);
+    else if (kind === 'item_potion') drawPotion(ctx, opts && opts.color);
+    else if (kind === 'item_coin')   drawCoin(ctx);
+    else if (kind === 'item_egg')    drawEgg(ctx);
+    else if (kind && kind.indexOf('wx_')===0) drawWeather(ctx, kind.slice(3));
+    else if (kind && kind.indexOf('tile_')===0) drawTile(ctx, kind.slice(5));
+    return c;
+  }
+
+  global.PixelSprites = { makeSprite };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+// === js/tests.js ===
+/* PixelQuest – Tests + auto-fixer
+ *
+ * Le "debugger auto-correctif" :
+ *   1. Tests d'invariants (purs) sur l'état du jeu : contraintes de
+ *      cohérence (XP >= 0, niveau >= 1, inventaire <= cap, total >=
+ *      lifetime, etc.).
+ *   2. Tests fonctionnels sur les calculs (xpForLevel, levelFromTotalXp,
+ *      validateSteps, ingestSteps).
+ *   3. Auto-fix : pour chaque test échoué, une fonction de réparation est
+ *      appelée. Elle modifie l'état pour le ramener dans un état valide
+ *      sans perdre la progression légitime.
+ */
+(function (global) {
+  'use strict';
+
+  const PQ = global.PixelQuest;
+
+  // -------- Tests fonctionnels (sans état) ----------------------------------
+  const FN_TESTS = [
+    {
+      id: 'xp_curve_growth',
+      desc: 'La courbe d\'XP est croissante (exponentielle)',
+      run() {
+        for (let l = 1; l < 50; l++) {
+          if (PQ.xpForLevel(l+1) <= PQ.xpForLevel(l)) {
+            return { ok:false, msg:'xpForLevel('+(l+1)+') <= xpForLevel('+l+')' };
+          }
+        }
+        return { ok:true };
+      }
+    },
+    {
+      id: 'level_from_total_xp_round_trip',
+      desc: 'levelFromTotalXp(totalXpToReach(N)) = N',
+      run() {
+        for (let n = 1; n < 30; n++) {
+          const total = PQ.totalXpToReach(n);
+          const r = PQ.levelFromTotalXp(total);
+          if (r.level !== n) return { ok:false, msg:'attendu '+n+', obtenu '+r.level };
+        }
+        return { ok:true };
+      }
+    },
+    {
+      id: 'antifraud_burst',
+      desc: 'L\'anti-triche bloque un burst de 5000 pas',
+      run() {
+        const s = PQ.defaultState();
+        const v = PQ.validateSteps(s, 5000, Date.now());
+        if (v.ok) return { ok:false, msg:'5000 pas en un coup acceptés sans flag' };
+        if (v.accepted >= 5000) return { ok:false, msg:'accepté trop : '+v.accepted };
+        return { ok:true };
+      }
+    },
+    {
+      id: 'antifraud_cadence',
+      desc: 'L\'anti-triche bloque une cadence > MAX/min',
+      run() {
+        const s = PQ.defaultState();
+        const t0 = Date.now();
+        let total = 0;
+        for (let i=0;i<5;i++) {
+          const r = PQ.ingestSteps(s, 80, t0 + i*1000);
+          total += r.gainedXp;
+        }
+        if (s.flags.length === 0) return { ok:false, msg:'aucun flag levé' };
+        return { ok:true };
+      }
+    },
+    {
+      id: 'normal_steps_accepted',
+      desc: '50 pas par minute = aucun flag',
+      run() {
+        const s = PQ.defaultState();
+        const t0 = Date.now();
+        for (let i=0;i<5;i++) PQ.ingestSteps(s, 10, t0 + i*60000);
+        if (s.flags.length > 0) return { ok:false, msg:'flag injuste' };
+        if (s.totalSteps !== 50) return { ok:false, msg:'totalSteps incorrect : '+s.totalSteps };
+        return { ok:true };
+      }
+    },
+    {
+      id: 'daily_threshold_doubles',
+      desc: 'Au-delà de 8000 pas/jour, l\'XP est doublée',
+      run() {
+        const s = PQ.defaultState();
+        s.dailySteps = PQ.CONFIG.DAILY_BONUS_THRESHOLD; // déjà au seuil
+        const t = Date.now();
+        // simuler 100 pas tous espacés pour ne pas être anti-cheat-bloqué
+        let xp = 0;
+        for (let i=0;i<5;i++){
+          const r = PQ.ingestSteps(s, 20, t + i*60000);
+          xp += r.gainedXp;
+        }
+        // en théorie, 100 pas en weather neutre = 100 xp; doublé = 200
+        // les conditions météo varient selon date, on tolère >=150
+        if (xp < 150) return { ok:false, msg:'XP doublée non appliquée : '+xp };
+        if (!s.doubledToday) return { ok:false, msg:'doubledToday=false' };
+        return { ok:true };
+      }
+    },
+    {
+      id: 'encumbrance_penalty',
+      desc: 'L\'inventaire encombré applique le malus 110/100',
+      run() {
+        const s = PQ.defaultState();
+        // Forcer encombrement
+        for (let i=0;i<PQ.CONFIG.INVENTORY_SOFT_CAP;i++) PQ.addItem(s, 'piece', 1);
+        const t = Date.now();
+        const r = PQ.ingestSteps(s, 110, t);
+        // 110 pas / 1.10 = 100 pas effectifs => XP ~100 (puis météo)
+        if (r.gainedXp > 110) return { ok:false, msg:'pas de malus appliqué : '+r.gainedXp };
+        return { ok:true };
+      }
+    },
+    {
+      id: 'shop_buy_sell',
+      desc: 'Achat puis vente cohérents',
+      run() {
+        const s = PQ.defaultState();
+        s.coins = 1000;
+        const before = s.coins;
+        const buy = PQ.buy(s, 'epee_bois');
+        if (!buy.ok) return { ok:false, msg:'achat échoué' };
+        if (s.coins !== before - 80) return { ok:false, msg:'coins après achat incorrects' };
+        const sell = PQ.sell(s, 'epee_bois');
+        if (!sell.ok) return { ok:false, msg:'vente échouée' };
+        if (sell.refund !== 32) return { ok:false, msg:'refund incorrect : '+sell.refund };
+        return { ok:true };
+      }
+    },
+    {
+      id: 'raid_damage',
+      desc: 'Le raid prend des dégâts à chaque pas',
+      run() {
+        const s = PQ.defaultState();
+        const before = s.raid.hp;
+        PQ.ingestSteps(s, 100, Date.now());
+        if (s.raid.hp >= before) return { ok:false, msg:'pas de dégâts au boss' };
+        return { ok:true };
+      }
+    },
+    {
+      id: 'quest_progress',
+      desc: 'Une quête de marche progresse correctement',
+      run() {
+        const s = PQ.defaultState();
+        PQ.acceptQuest(s, 'q_walk_500');
+        // 5 lots de 100 pas espacés
+        const t = Date.now();
+        for (let i=0;i<5;i++) PQ.ingestSteps(s, 100, t + i*60000);
+        const q = s.activeQuests.find(x=>x.id==='q_walk_500');
+        if (!q) return { ok:false, msg:'quête perdue' };
+        if (q.progress < 500) return { ok:false, msg:'progression : '+q.progress };
+        const r = PQ.turnInQuest(s, 'q_walk_500');
+        if (!r.ok) return { ok:false, msg:'turn-in échoué' };
+        return { ok:true };
+      }
+    },
+    {
+      id: 'achievements_trigger',
+      desc: 'Les succès se déclenchent',
+      run() {
+        const s = PQ.defaultState();
+        s.totalSteps = 100; PQ.refreshAchievements(s);
+        if (!s.achievements.includes('premiers_pas')) return { ok:false, msg:'premiers_pas non débloqué' };
+        return { ok:true };
+      }
+    },
+  ];
+
+  // -------- Invariants sur un state vivant ----------------------------------
+  const INVARIANTS = [
+    {
+      id: 'xp_non_negative',
+      check: s => s.xp >= 0,
+      fix:   s => { if (s.xp < 0) s.xp = 0; },
+    },
+    {
+      id: 'level_min_1',
+      check: s => s.level >= 1,
+      fix:   s => { if (s.level < 1) s.level = 1; },
+    },
+    {
+      id: 'level_max_999',
+      check: s => s.level <= 999,
+      fix:   s => { if (s.level > 999) s.level = 999; },
+    },
+    {
+      id: 'coins_non_negative',
+      check: s => s.coins >= 0,
+      fix:   s => { if (s.coins < 0) s.coins = 0; },
+    },
+    {
+      id: 'totalSteps_le_lifetime',
+      check: s => s.totalSteps <= s.lifetimeSteps + 1,
+      fix:   s => { if (s.totalSteps > s.lifetimeSteps) s.lifetimeSteps = s.totalSteps; },
+    },
+    {
+      id: 'dailySteps_non_negative',
+      check: s => s.dailySteps >= 0,
+      fix:   s => { if (s.dailySteps < 0) s.dailySteps = 0; },
+    },
+    {
+      id: 'inventory_under_hard_cap',
+      check: s => PQ.inventoryWeight(s) <= PQ.CONFIG.INVENTORY_HARD_CAP,
+      fix:   s => {
+        while (PQ.inventoryWeight(s) > PQ.CONFIG.INVENTORY_HARD_CAP && s.inventory.length > 0) {
+          const last = s.inventory[s.inventory.length - 1];
+          last.qty -= 1;
+          if (last.qty <= 0) s.inventory.pop();
+        }
+      },
+    },
+    {
+      id: 'raid_hp_non_negative',
+      check: s => s.raid && s.raid.hp >= 0,
+      fix:   s => { if (s.raid && s.raid.hp < 0) s.raid.hp = 0; },
+    },
+    {
+      id: 'pos_in_bounds',
+      check: s => s.pos.x >= 0 && s.pos.x < 9 && s.pos.y >= 0 && s.pos.y < 9,
+      fix:   s => {
+        s.pos.x = ((s.pos.x % 9) + 9) % 9;
+        s.pos.y = ((s.pos.y % 9) + 9) % 9;
+      },
+    },
+    {
+      id: 'xp_below_threshold',
+      check: s => s.xp < PQ.xpForLevel(s.level) * 1.5,
+      fix:   s => {
+        while (s.xp >= PQ.xpForLevel(s.level)) {
+          s.xp -= PQ.xpForLevel(s.level);
+          s.level += 1;
+        }
+      },
+    },
+    {
+      id: 'character_class_known',
+      check: s => !s.character || PQ.CLASSES.find(c=>c.id===s.character.classId),
+      fix:   s => { if (s.character && !PQ.CLASSES.find(c=>c.id===s.character.classId)) s.character.classId = 'guerrier'; },
+    },
+    {
+      id: 'weather_known',
+      check: s => PQ.WEATHERS.find(w=>w.id===s.weatherId),
+      fix:   s => { if (!PQ.WEATHERS.find(w=>w.id===s.weatherId)) s.weatherId = 'soleil'; },
+    },
+    {
+      id: 'inventory_qty_positive',
+      check: s => s.inventory.every(it => it.qty > 0),
+      fix:   s => { s.inventory = s.inventory.filter(it => it.qty > 0); },
+    },
+    {
+      id: 'no_duplicate_quests',
+      check: s => new Set(s.activeQuests.map(q=>q.id)).size === s.activeQuests.length,
+      fix:   s => {
+        const seen = new Set();
+        s.activeQuests = s.activeQuests.filter(q => seen.has(q.id) ? false : (seen.add(q.id), true));
+      },
+    },
+    {
+      id: 'achievements_unique',
+      check: s => new Set(s.achievements).size === s.achievements.length,
+      fix:   s => { s.achievements = Array.from(new Set(s.achievements)); },
+    },
+  ];
+
+  function runFunctionalTests() {
+    const out = [];
+    for (const t of FN_TESTS) {
+      try {
+        const r = t.run();
+        out.push({ id: t.id, desc: t.desc, ok: r.ok, msg: r.msg || '' });
+      } catch (e) {
+        out.push({ id: t.id, desc: t.desc, ok:false, msg: 'EXCEPTION: '+e.message });
+      }
+    }
+    return out;
+  }
+
+  function runInvariants(state) {
+    const out = [];
+    for (const inv of INVARIANTS) {
+      let ok = false, err = null;
+      try { ok = !!inv.check(state); } catch (e) { err = e.message; }
+      out.push({ id: inv.id, ok, err });
+    }
+    return out;
+  }
+
+  function autoFix(state) {
+    const fixed = [];
+    for (let pass = 0; pass < 4; pass++) {
+      let changed = false;
+      for (const inv of INVARIANTS) {
+        try {
+          if (!inv.check(state)) {
+            inv.fix(state);
+            changed = true;
+            if (inv.check(state)) fixed.push(inv.id);
+          }
+        } catch (e) {
+          fixed.push(inv.id + ' (exception: '+e.message+')');
+        }
+      }
+      if (!changed) break;
+    }
+    return fixed;
+  }
+
+  global.PixelTests = {
+    FN_TESTS, INVARIANTS,
+    runFunctionalTests, runInvariants, autoFix,
+  };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+// === js/sync.js ===
+/* PixelQuest – Sync Phone <-> Watch (preview).
+ * Dans la preview, "phone" et "watch" partagent un même état JS. Pour
+ * fidèlement simuler la latence du Data Layer Wear OS, on relaie les
+ * mutations via un EventTarget avec un petit delay et un statut visuel.
+ *
+ * Sur Android, ce module sera remplacé par un wrapper Kotlin qui utilise
+ * la `Wearable.DataClient` API (cf. android/shared/sync/SyncBus.kt).
+ */
+(function (global) {
+  'use strict';
+
+  const bus = new EventTarget();
+  let lastSync = Date.now();
+  let pending = 0;
+
+  function emit(type, payload) {
+    pending++;
+    setTimeout(() => {
+      pending = Math.max(0, pending - 1);
+      lastSync = Date.now();
+      bus.dispatchEvent(new CustomEvent(type, { detail: payload }));
+      bus.dispatchEvent(new CustomEvent('synced', { detail: { type, ts: lastSync } }));
+    }, 80);
+  }
+
+  function on(type, cb)   { bus.addEventListener(type, cb); }
+  function off(type, cb)  { bus.removeEventListener(type, cb); }
+  function status() { return { pending, lastSync }; }
+
+  global.PixelSync = { emit, on, off, status };
+})(typeof window !== 'undefined' ? window : globalThis);
+
+
+// === js/ui.js ===
+/* PixelQuest – UI preview (téléphone + montre + debugger). */
+(function () {
+  'use strict';
+
+  const PQ = window.PixelQuest;
+  const PS = window.PixelSprites;
+  const PT = window.PixelTests;
+  const PSync = window.PixelSync;
+
+  const STORE_KEY = 'pixelquest_state_v1';
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return PQ.defaultState();
+      const s = JSON.parse(raw);
+      // run autoFix au chargement, au cas où
+      PT.autoFix(s);
+      return s;
+    } catch (e) {
+      console.warn('Erreur chargement, état neuf', e);
+      return PQ.defaultState();
+    }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch (e) {}
+  }
+
+  let state = loadState();
+  let activeTab = 'map';
+  let activeWatchTab = 'main';
+  let lastDialogue = null;
+  let tickerHandle = null;
+
+  // ------ Personnage par défaut si premier lancement ------
+  if (!state.character) {
+    state.character = {
+      name: 'Aventurier',
+      classId: 'guerrier',
+      hair: 'short',
+      hairColor: '#8b4513',
+      skin: '#f4c79a',
+    };
+    saveState(state);
+  }
+
+  // ------ Helpers UI --------------------------------------------------------
+  function $(sel, root) { return (root || document).querySelector(sel); }
+  function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
+  function el(tag, cls, html) {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (html !== undefined) e.innerHTML = html;
+    return e;
+  }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  // ------ Heros canvas ------------------------------------------------------
+  function paintHeroInto(canvas, charOverride) {
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const c = charOverride || state.character;
+    const sprite = PS.makeSprite('hero', { skin: c.skin, hairColor: c.hairColor, classId: c.classId });
+    ctx.drawImage(sprite, 0, 0, canvas.width, canvas.height);
+  }
+
+  // ------ Render PHONE ------------------------------------------------------
+  function renderPhone() {
+    // HUD
+    paintHeroInto($('#phoneHero'));
+    $('#phoneName').textContent = state.character.name + ' · ' + (PQ.CLASSES.find(c=>c.id===state.character.classId)||{name:'?'}).name;
+    $('#phoneLvl').textContent = state.level;
+    $('#phoneCoins').textContent = state.coins;
+    const need = PQ.xpForLevel(state.level);
+    $('#phoneXpFill').style.width = Math.min(100, (state.xp/need)*100) + '%';
+    $('#phoneXpLabel').textContent = state.xp + ' / ' + need + ' XP';
+    $('#phoneDailySteps').textContent = state.dailySteps;
+    const thresh = PQ.CONFIG.DAILY_BONUS_THRESHOLD;
+    $('#phoneThreshold').textContent = state.dailySteps >= thresh
+      ? '✓ Bonus x2 actif !'
+      : 'Seuil ' + thresh + ' : ' + Math.max(0, thresh-state.dailySteps) + ' restants';
+    const wx = PQ.WEATHERS.find(w=>w.id===state.weatherId) || PQ.WEATHERS[0];
+    $('#phoneWeather').innerHTML = '';
+    $('#phoneWeather').appendChild(PS.makeSprite('wx_'+wx.id, {scale:2}, 16));
+    $('#phoneWeather').appendChild(document.createTextNode(' ' + wx.name + ' · ' + PQ.seasonNow()));
+
+    // Tab content
+    if (activeTab === 'map')          renderMap();
+    if (activeTab === 'quests')       renderQuests();
+    if (activeTab === 'shop')         renderShop();
+    if (activeTab === 'bestiary')     renderBestiary();
+    if (activeTab === 'pets')         renderPets();
+    if (activeTab === 'raid')         renderRaid();
+    if (activeTab === 'char')         renderChar();
+    if (activeTab === 'achievements') renderAchievements();
+  }
+
+  function renderMap() {
+    const grid = $('#phoneMap');
+    grid.innerHTML = '';
+    const tiles = makeWorld();
+    for (let y=0; y<9; y++) {
+      for (let x=0; x<9; x++) {
+        const cell = el('div', 'map-cell');
+        const c = PS.makeSprite('tile_'+tiles[y][x], { scale: 2 }, 16);
+        c.style.width = '100%'; c.style.height = '100%';
+        cell.appendChild(c);
+        if (x === state.pos.x && y === state.pos.y) {
+          const m = el('div','marker','🧙');
+          cell.appendChild(m);
+        } else {
+          const npc = npcAt(x, y);
+          if (npc) {
+            const m = el('div','marker', npcEmoji(npc.id));
+            cell.appendChild(m);
+          }
+        }
+        grid.appendChild(cell);
+      }
+    }
+    // Dialogue : si on est sur un NPC, parle
+    const npcHere = npcAt(state.pos.x, state.pos.y);
+    const d = $('#phoneDialogue');
+    if (npcHere) {
+      const lines = npcHere.dialogues;
+      const line = lines[Math.abs(PQ.hashStr(state.totalSteps + npcHere.id)) % lines.length];
+      d.innerHTML = '<span class="who">' + escapeHtml(npcHere.name) + ' :</span>' + escapeHtml(line);
+      lastDialogue = npcHere.id + ':' + line;
+    } else {
+      d.innerHTML = '<span class="who">Narrateur :</span>Tu marches sur le sentier. (Pas d\'approche : ouvre l\'onglet Quêtes.)';
+    }
+  }
+
+  function makeWorld() {
+    // Monde 9x9 déterministe (les types de tuiles).
+    const rows = [];
+    const seed = 'world-v1';
+    for (let y=0;y<9;y++){
+      const row = [];
+      for (let x=0;x<9;x++){
+        const h = Math.abs(PQ.hashStr(seed+':'+x+':'+y));
+        let kind = 'grass';
+        const m = h % 100;
+        if (m < 8) kind = 'water';
+        else if (m < 22) kind = 'forest';
+        else if (m < 30) kind = 'sand';
+        else if (m < 36) kind = 'stone';
+        else if (m < 40) kind = 'snow';
+        row.push(kind);
+      }
+      rows.push(row);
+    }
+    return rows;
+  }
+  function npcAt(x,y) {
+    const positions = {
+      'taverniere': [4,4],
+      'forgeron':   [2,6],
+      'sage':       [6,2],
+      'eleveur':    [7,7],
+    };
+    for (const id in positions) {
+      const [px,py] = positions[id];
+      if (px===x && py===y) return PQ.NPCS.find(n=>n.id===id);
+    }
+    return null;
+  }
+  function npcEmoji(id) {
+    return ({ taverniere:'🍺', forgeron:'🔨', sage:'📜', eleveur:'🥚' })[id] || '👤';
+  }
+
+  function renderQuests() {
+    const active = $('#phoneActiveQuests');
+    const avail  = $('#phoneAvailableQuests');
+    active.innerHTML = ''; avail.innerHTML = '';
+    if (state.activeQuests.length === 0) active.innerHTML = '<i style="color:#b9aee0">Aucune quête active.</i>';
+    state.activeQuests.forEach(q => {
+      const tpl = PQ.QUEST_TEMPLATES.find(t=>t.id===q.id); if (!tpl) return;
+      const giver = PQ.NPCS.find(n=>n.id===tpl.giver);
+      const div = el('div','quest');
+      const pct = Math.min(100, Math.floor((q.progress/tpl.goal)*100));
+      div.innerHTML =
+        '<div class="qhead"><span class="qname">'+escapeHtml(tpl.name)+'</span>'+
+        '<span class="qprog">'+q.progress+' / '+tpl.goal+'</span></div>'+
+        '<div style="font-size:13px;color:#b9aee0">de '+escapeHtml(giver?giver.name:'?')+
+        ' · récompense '+tpl.reward.xp+' XP, '+tpl.reward.coin+'🪙</div>'+
+        '<div class="qbar"><div class="qfill" style="width:'+pct+'%"></div></div>'+
+        '<div class="qact"></div>';
+      const acts = div.querySelector('.qact');
+      if (q.progress >= tpl.goal) {
+        const b = document.createElement('button'); b.textContent = 'Rendre'; b.onclick = () => {
+          const r = PQ.turnInQuest(state, q.id);
+          if (r.ok) flashLog('ok', 'Quête « '+tpl.name+' » rendue. +'+r.reward.xp+' XP, +'+r.reward.coin+'🪙');
+          syncAndRender();
+        };
+        acts.appendChild(b);
+      }
+      active.appendChild(div);
+    });
+    PQ.QUEST_TEMPLATES.forEach(tpl => {
+      const isActive = state.activeQuests.find(q=>q.id===tpl.id);
+      const isDone   = state.completedQuests.includes(tpl.id);
+      if (isActive || isDone) return;
+      const giver = PQ.NPCS.find(n=>n.id===tpl.giver);
+      const div = el('div','quest');
+      div.innerHTML =
+        '<div class="qhead"><span class="qname">'+escapeHtml(tpl.name)+'</span>'+
+        '<span class="qprog">objectif '+tpl.goal+(tpl.type?' '+(tpl.type==='kill'?tpl.target:tpl.type):'')+'</span></div>'+
+        '<div style="font-size:13px;color:#b9aee0">de '+escapeHtml(giver?giver.name:'?')+
+        ' · récompense '+tpl.reward.xp+' XP, '+tpl.reward.coin+'🪙</div>'+
+        '<div class="qact"></div>';
+      const b = document.createElement('button'); b.textContent = 'Accepter'; b.onclick = () => {
+        if (PQ.acceptQuest(state, tpl.id)) {
+          flashLog('ok', 'Quête « '+tpl.name+' » acceptée.');
+        }
+        syncAndRender();
+      };
+      div.querySelector('.qact').appendChild(b);
+      avail.appendChild(div);
+    });
+  }
+
+  function renderShop() {
+    const g = $('#phoneShop'); g.innerHTML = '';
+    PQ.SHOP_ITEMS.forEach(it => {
+      const card = el('div','item');
+      card.innerHTML =
+        '<div class="iname">'+escapeHtml(it.name)+'</div>'+
+        '<div class="idesc">'+escapeHtml(it.desc)+'</div>'+
+        '<div class="iprice">'+it.price+'🪙</div>';
+      const b = document.createElement('button'); b.textContent='Acheter'; b.onclick=()=>{
+        const r = PQ.buy(state, it.id);
+        if (r.ok) flashLog('ok','Acheté : '+it.name);
+        else flashLog('ko','Achat impossible : '+r.reason);
+        syncAndRender();
+      };
+      card.appendChild(b);
+      g.appendChild(card);
+    });
+
+    const inv = $('#phoneInv'); inv.innerHTML = '';
+    $('#phoneInvCount').textContent = PQ.inventoryWeight(state);
+    state.inventory.forEach(it => {
+      const def = PQ.SHOP_ITEMS.find(s=>s.id===it.id) || { name: it.id, desc:'objet', price: 5, type:'misc' };
+      const card = el('div','item');
+      card.innerHTML =
+        '<div class="iname">'+escapeHtml(def.name)+' x'+it.qty+'</div>'+
+        '<div class="idesc">'+escapeHtml(def.desc||'objet')+'</div>'+
+        '<div class="iprice">vente '+Math.floor(def.price*0.4)+'🪙</div>';
+      const b = document.createElement('button'); b.textContent='Vendre'; b.onclick=()=>{
+        const r = PQ.sell(state, it.id);
+        if (r.ok) flashLog('ok','Vendu : '+def.name+' (+'+r.refund+'🪙)');
+        syncAndRender();
+      };
+      card.appendChild(b);
+      // Equip pour armes/armures
+      if (def.type === 'weapon' || def.type === 'armor') {
+        const e = document.createElement('button'); e.textContent='Équiper';
+        e.onclick = () => {
+          const slot = def.type;
+          state.equipped[slot] = it.id;
+          flashLog('ok','Équipé : '+def.name);
+          syncAndRender();
+        };
+        card.appendChild(e);
+      }
+      inv.appendChild(card);
+    });
+    $('#phoneEncumbered').textContent = PQ.isEncumbered(state)
+      ? '⚠ Encombrement : 110 pas pour 100 XP. Vendez ou déposez à la Taverne.'
+      : '';
+  }
+
+  function renderBestiary() {
+    const g = $('#phoneBestiary'); g.innerHTML = '';
+    PQ.MONSTERS.forEach(m => {
+      const seen = (state.bestiary[m.id]||0) > 0;
+      const card = el('div','bestiary-card' + (seen?'':' locked'));
+      const c = PS.makeSprite(m.sprite, { scale: 2 });
+      c.style.width = '48px'; c.style.height = '48px';
+      card.appendChild(c);
+      const info = el('div','info');
+      info.innerHTML =
+        '<div class="name">'+escapeHtml(seen?m.name:'???')+'</div>'+
+        '<div class="meta">PV '+m.hp+' · XP '+m.xp+' · Tier '+m.tier+'</div>'+
+        '<div class="meta">Vaincus : '+(state.bestiary[m.id]||0)+'</div>';
+      card.appendChild(info);
+      const b = document.createElement('button'); b.textContent='Combattre'; b.onclick=()=>{
+        const r = PQ.fight(state, m.id);
+        if (r.ok) flashLog('ok','Vaincu : '+m.name);
+        else     flashLog('ko','Trop fort. Reviens plus tard.');
+        syncAndRender();
+      };
+      card.appendChild(b);
+      g.appendChild(card);
+    });
+  }
+
+  function renderPets() {
+    const eggDiv = $('#phoneEgg');
+    if (state.eggIncubating) {
+      const def = PQ.PETS.find(p=>p.id===state.eggIncubating.petId);
+      const c = PS.makeSprite('item_egg', {scale:2});
+      eggDiv.innerHTML = '';
+      eggDiv.appendChild(c);
+      const info = el('div','');
+      const pct = Math.min(100, Math.floor((state.eggIncubating.steps/def.hatchSteps)*100));
+      info.innerHTML = '<div class="iname">Œuf en couvée</div>'+
+        '<div class="idesc">Marche pour faire éclore… ('+state.eggIncubating.steps+' / '+def.hatchSteps+' pas — '+pct+'%)</div>';
+      eggDiv.appendChild(info);
+    } else {
+      eggDiv.innerHTML = '<i style="color:#b9aee0">Aucun œuf en couvée. Achète un Œuf Mystère à la boutique.</i>';
+    }
+    const g = $('#phonePets'); g.innerHTML = '';
+    PQ.PETS.forEach(p => {
+      const owned = state.pets.find(x=>x.id===p.id && x.hatched);
+      const card = el('div','pet-card' + (owned?'':' locked'));
+      if (!owned) card.style.filter = 'grayscale(1) brightness(0.5)';
+      const c = PS.makeSprite(p.sprite, { scale: 2 });
+      c.style.width = '64px'; c.style.height = '64px';
+      card.appendChild(c);
+      card.appendChild(el('div','iname',escapeHtml(p.name)));
+      card.appendChild(el('div','idesc','éclot à '+p.hatchSteps+' pas'));
+      card.appendChild(el('div','idesc',escapeHtml(p.trait)));
+      g.appendChild(card);
+    });
+  }
+
+  function renderRaid() {
+    const div = $('#phoneRaid');
+    div.innerHTML = '';
+    const boss = PQ.RAID_BOSSES.find(b=>b.id===state.raid.bossId) || PQ.RAID_BOSSES[0];
+    const c = PS.makeSprite('boss_dragon', { scale: 4 }, 32);
+    c.style.width = '128px'; c.style.height = '128px';
+    div.appendChild(c);
+    div.appendChild(el('div','raid-name','BOSS · '+escapeHtml(boss.name)));
+    const total = boss.hp;
+    const cur = state.raid.hp;
+    const pct = Math.max(0, Math.min(100, (cur/total)*100));
+    const bar = el('div','raid-bar');
+    bar.innerHTML = '<div class="rfill" style="width:'+pct+'%"></div><span>'+cur+' / '+total+' PV</span>';
+    div.appendChild(bar);
+    div.appendChild(el('div','raid-info',
+      'Chaque pas = 1 dégât. Tu as jusqu\'à dimanche soir. ' +
+      (cur===0 ? '🏆 BOSS VAINCU ! Récompense : '+boss.reward : 'Total infligé : '+state.raid.participated)
+    ));
+  }
+
+  function renderChar() {
+    const root = $('#phoneCharBuilder');
+    root.innerHTML = '';
+    // preview
+    const prev = el('div','preview-hero');
+    const c = document.createElement('canvas'); c.width = 16; c.height = 16;
+    c.style.width = '128px'; c.style.height = '128px'; c.style.imageRendering = 'pixelated';
+    prev.appendChild(c);
+    paintHeroInto(c);
+    root.appendChild(prev);
+
+    // name
+    const nameRow = el('div','char-row');
+    nameRow.innerHTML = '<label>Nom</label>';
+    const inp = document.createElement('input'); inp.type='text'; inp.value = state.character.name;
+    inp.maxLength = 16;
+    inp.oninput = () => { state.character.name = inp.value || 'Aventurier'; saveState(state); syncAndRender(); };
+    nameRow.appendChild(inp);
+    root.appendChild(nameRow);
+
+    // class
+    const cl = el('div','char-row'); cl.innerHTML = '<label>Classe</label>';
+    const grid = el('div','class-grid');
+    PQ.CLASSES.forEach(k => {
+      const card = el('div','class-card' + (state.character.classId===k.id?' active':''));
+      card.innerHTML = '<div class="iname">'+escapeHtml(k.name)+'</div><div class="idesc" style="font-size:11px">'+escapeHtml(k.desc)+'</div>';
+      card.onclick = () => { state.character.classId = k.id; saveState(state); syncAndRender(); };
+      grid.appendChild(card);
+    });
+    cl.appendChild(grid);
+    root.appendChild(cl);
+
+    // hair color
+    const hc = el('div','char-row'); hc.innerHTML = '<label>Cheveux</label>';
+    const hg = el('div','color-grid');
+    PQ.HAIR_COLORS.forEach(col => {
+      const sw = el('div','swatch'+(state.character.hairColor===col?' active':''));
+      sw.style.background = col;
+      sw.onclick = () => { state.character.hairColor = col; saveState(state); syncAndRender(); };
+      hg.appendChild(sw);
+    });
+    hc.appendChild(hg);
+    root.appendChild(hc);
+
+    // skin
+    const sk = el('div','char-row'); sk.innerHTML = '<label>Peau</label>';
+    const sg = el('div','color-grid');
+    PQ.SKIN_TONES.forEach(col => {
+      const sw = el('div','swatch'+(state.character.skin===col?' active':''));
+      sw.style.background = col;
+      sw.onclick = () => { state.character.skin = col; saveState(state); syncAndRender(); };
+      sg.appendChild(sw);
+    });
+    sk.appendChild(sg);
+    root.appendChild(sk);
+
+    // hairstyle (textuel pour l'instant)
+    const hs = el('div','char-row'); hs.innerHTML = '<label>Coiffure</label>';
+    PQ.HAIRSTYLES.forEach(h => {
+      const b = document.createElement('button');
+      b.textContent = h;
+      if (state.character.hair===h) b.style.background = '#d36cb0';
+      b.onclick = () => { state.character.hair = h; saveState(state); syncAndRender(); };
+      hs.appendChild(b);
+    });
+    root.appendChild(hs);
+  }
+
+  function renderAchievements() {
+    const g = $('#phoneAchievements'); g.innerHTML = '';
+    PQ.ACHIEVEMENTS.forEach(a => {
+      const got = state.achievements.includes(a.id);
+      const div = el('div','ach ' + (got?'unlocked':'locked'));
+      div.innerHTML = '<div class="aname">'+(got?'★ ':'')+escapeHtml(a.name)+'</div>';
+      g.appendChild(div);
+    });
+  }
+
+  // ------ Render WATCH ------------------------------------------------------
+  function renderWatch() {
+    const root = $('#watchContent');
+    root.innerHTML = '';
+    if (activeWatchTab === 'main') {
+      // Heros + Niveau + XP + steps
+      const c = document.createElement('canvas'); c.width=16; c.height=16;
+      c.style.width='48px'; c.style.height='48px'; c.style.imageRendering='pixelated';
+      paintHeroInto(c);
+      root.appendChild(c);
+      root.appendChild(rowNum('Niv.', state.level));
+      const need = PQ.xpForLevel(state.level);
+      const bar = el('div','watch-bar');
+      bar.innerHTML = '<div class="fill" style="width:'+Math.min(100,(state.xp/need)*100)+'%"></div>';
+      root.appendChild(bar);
+      root.appendChild(rowNum('Pas', state.dailySteps));
+      root.appendChild(rowNum('🪙', state.coins));
+    } else if (activeWatchTab === 'quest') {
+      const q = state.activeQuests[0];
+      if (!q) { root.appendChild(rowLbl('Aucune quête')); }
+      else {
+        const tpl = PQ.QUEST_TEMPLATES.find(t=>t.id===q.id);
+        root.appendChild(rowLbl(tpl?tpl.name:'?'));
+        root.appendChild(rowNum(q.progress, tpl?tpl.goal:'?'));
+        const bar = el('div','watch-bar');
+        bar.innerHTML = '<div class="fill" style="background:#2ecc71;width:'+
+          Math.min(100, Math.floor((q.progress/(tpl?tpl.goal:1))*100))+'%"></div>';
+        root.appendChild(bar);
+      }
+    } else if (activeWatchTab === 'raid') {
+      const boss = PQ.RAID_BOSSES.find(b=>b.id===state.raid.bossId);
+      const c = PS.makeSprite('boss_dragon',{scale:2},32);
+      c.style.width='64px'; c.style.height='64px';
+      root.appendChild(c);
+      root.appendChild(rowLbl(boss?boss.name:'?'));
+      const bar = el('div','watch-bar');
+      bar.innerHTML = '<div class="fill" style="background:linear-gradient(90deg,#7a1a1a,#ff5d6c);width:'+
+        Math.min(100, (state.raid.hp/(boss?boss.hp:1))*100)+'%"></div>';
+      root.appendChild(bar);
+      root.appendChild(rowLbl(state.raid.hp+' PV'));
+    } else if (activeWatchTab === 'pet') {
+      if (state.eggIncubating) {
+        const c = PS.makeSprite('item_egg',{scale:2});
+        c.style.width='48px'; c.style.height='48px';
+        root.appendChild(c);
+        const def = PQ.PETS.find(p=>p.id===state.eggIncubating.petId);
+        const bar = el('div','watch-bar');
+        bar.innerHTML = '<div class="fill" style="background:#d36cb0;width:'+
+          Math.min(100, Math.floor((state.eggIncubating.steps/def.hatchSteps)*100))+'%"></div>';
+        root.appendChild(bar);
+        root.appendChild(rowLbl(state.eggIncubating.steps+'/'+def.hatchSteps));
+      } else if (state.pets.length) {
+        const p = state.pets[0];
+        const def = PQ.PETS.find(P=>P.id===p.id);
+        const c = PS.makeSprite(def.sprite,{scale:2});
+        c.style.width='48px'; c.style.height='48px';
+        root.appendChild(c);
+        root.appendChild(rowLbl(def.name));
+      } else {
+        root.appendChild(rowLbl('Aucun familier'));
+      }
+    }
+  }
+  function rowNum(label, num) {
+    const r = el('div','w-row');
+    r.innerHTML = '<span class="w-lbl">'+escapeHtml(String(label))+'</span><span class="w-num">'+escapeHtml(String(num))+'</span>';
+    return r;
+  }
+  function rowLbl(t) {
+    const r = el('div','w-row');
+    r.innerHTML = '<span class="w-lbl">'+escapeHtml(String(t))+'</span>';
+    return r;
+  }
+
+  // ------ Sync + render ----------------------------------------------------
+  function syncAndRender() {
+    // Auto-fix systématique : protège l'UI
+    const fixed = PT.autoFix(state);
+    if (fixed.length) flashLog('fix', 'Auto-fix : ' + fixed.join(', '));
+
+    saveState(state);
+    PSync.emit('state', state);
+    renderPhone(); renderWatch();
+    renderCheatLog();
+    renderSyncStatus();
+  }
+
+  PSync.on('state', () => { /* autres consumers en hook */ });
+  PSync.on('synced', () => { renderSyncStatus(); });
+
+  function renderSyncStatus() {
+    const st = PSync.status();
+    const dot = $('#syncDot');
+    const lbl = $('#syncLabel');
+    if (st.pending > 0) { dot.classList.remove('ok'); lbl.textContent = 'Sync en cours…'; }
+    else { dot.classList.add('ok'); lbl.textContent = 'Sync ✓ Phone ↔ Watch (' + new Date(st.lastSync).toLocaleTimeString() + ')'; }
+  }
+  function renderCheatLog() {
+    const recent = state.flags.slice(-6).reverse().map(f =>
+      new Date(f.t).toLocaleTimeString() + ' — ' + f.issues.join(', ') + ' (raw '+f.raw+', kept '+f.kept+')'
+    );
+    $('#cheatLog').textContent = recent.length ? recent.join('
+') : 'Aucune anomalie détectée.';
+  }
+
+  function flashLog(cls, msg) {
+    const log = $('#debugLog');
+    const span = '<span class="'+cls+'">' + escapeHtml(new Date().toLocaleTimeString()) + ' ' + escapeHtml(msg) + '</span>
+';
+    log.innerHTML += span;
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // ------ Tabs handlers ----------------------------------------------------
+  $$('.tab').forEach(t => t.addEventListener('click', () => {
+    $$('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    activeTab = t.dataset.tab;
+    $$('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.pane===activeTab));
+    renderPhone();
+  }));
+  $$('.wtab').forEach(t => t.addEventListener('click', () => {
+    $$('.wtab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    activeWatchTab = t.dataset.wtab;
+    renderWatch();
+  }));
+
+  // ------ Top-bar handlers -------------------------------------------------
+  $('#btnAddSteps').addEventListener('click', () => {
+    const n = parseInt($('#simSteps').value, 10) || 50;
+    const r = PQ.ingestSteps(state, n, Date.now());
+    flashLog('info', '+'+r.gainedXp+' XP, +'+r.gainedCoins+'🪙'
+      + (r.levelUps.length ? ' · LEVEL UP → '+r.levelUps.join(',') : '')
+      + (r.issues.length ? ' · ⚠ '+r.issues.join('; ') : ''));
+    syncAndRender();
+  });
+  $('#btnTick').addEventListener('click', () => {
+    if (tickerHandle) { clearInterval(tickerHandle); tickerHandle = null; flashLog('info','Tick auto arrêté.'); return; }
+    flashLog('info', 'Tick auto démarré : 50 pas / 5s');
+    tickerHandle = setInterval(() => {
+      const r = PQ.ingestSteps(state, 50, Date.now());
+      if (r.levelUps.length) flashLog('ok', 'LEVEL UP → niv. '+r.levelUps.join(','));
+      syncAndRender();
+    }, 5000);
+  });
+  $('#btnReset').addEventListener('click', () => {
+    if (!confirm('Réinitialiser TOUTE la progression ?')) return;
+    state = PQ.defaultState();
+    state.character = {
+      name: 'Aventurier', classId: 'guerrier',
+      hair: 'short', hairColor: '#8b4513', skin: '#f4c79a'
+    };
+    saveState(state);
+    flashLog('info', 'État réinitialisé.');
+    syncAndRender();
+  });
+  $('#simDate').valueAsDate = new Date();
+
+  // ------ Debug actions ----------------------------------------------------
+  $('#btnRunTests').addEventListener('click', () => {
+    const log = $('#debugLog');
+    log.innerHTML = '<span class="info">▶ Tests fonctionnels</span>
+';
+    const fr = PT.runFunctionalTests();
+    let pass = 0, fail = 0;
+    fr.forEach(r => {
+      const cls = r.ok ? 'ok' : 'ko';
+      log.innerHTML += '<span class="'+cls+'">'+(r.ok?'✓':'✗')+' ['+r.id+'] '+escapeHtml(r.desc)+(r.msg?' — '+escapeHtml(r.msg):'')+'</span>
+';
+      if (r.ok) pass++; else fail++;
+    });
+    log.innerHTML += '<span class="info">
+▶ Invariants sur état actuel</span>
+';
+    const ir = PT.runInvariants(state);
+    let ipass = 0, ifail = 0;
+    ir.forEach(r => {
+      const cls = r.ok ? 'ok' : 'ko';
+      log.innerHTML += '<span class="'+cls+'">'+(r.ok?'✓':'✗')+' ['+r.id+']'+(r.err?' err:'+escapeHtml(r.err):'')+'</span>
+';
+      if (r.ok) ipass++; else ifail++;
+    });
+    log.innerHTML += '<span class="info">
+Résumé : '+pass+'/'+fr.length+' fn, '+ipass+'/'+ir.length+' inv.</span>
+';
+    if (fail+ifail>0) log.innerHTML += '<span class="fix">→ Cliquez « Auto-fix » pour réparer les invariants en échec.</span>
+';
+    log.scrollTop = log.scrollHeight;
+  });
+  $('#btnAutoFix').addEventListener('click', () => {
+    const fixed = PT.autoFix(state);
+    if (fixed.length === 0) flashLog('ok', 'Aucun fix nécessaire — état sain.');
+    else flashLog('fix', 'Auto-fix appliqué : ' + fixed.join(', '));
+    syncAndRender();
+  });
+  $('#btnExport').addEventListener('click', () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'pixelquest-state-'+Date.now()+'.json';
+    a.click();
+  });
+
+  // Easter egg : Konami (↑↑↓↓←→←→BA)
+  const konami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  let konamiIdx = 0;
+  document.addEventListener('keydown', (e) => {
+    const want = konami[konamiIdx];
+    if (e.key === want || e.key.toLowerCase() === want) {
+      konamiIdx++;
+      if (konamiIdx === konami.length) {
+        konamiIdx = 0;
+        state.coins += 1000;
+        flashLog('ok', '🎉 Easter egg Konami ! +1000🪙');
+        syncAndRender();
+      }
+    } else {
+      konamiIdx = 0;
+    }
+  });
+
+  // ------ PWA install prompt -----------------------------------------------
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = $('#btnInstall');
+    if (btn) btn.style.display = '';
+  });
+  $('#btnInstall')?.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice.catch(() => null);
+    deferredPrompt = null;
+    $('#btnInstall').style.display = 'none';
+  });
+
+  // Affiche l'astuce d'installation 1 fois sur petit écran
+  if (window.matchMedia('(max-width: 520px)').matches &&
+      !localStorage.getItem('pixelquest_hint_seen')) {
+    $('#installHint').style.display = '';
+  }
+  $('#closeHint')?.addEventListener('click', () => {
+    $('#installHint').style.display = 'none';
+    localStorage.setItem('pixelquest_hint_seen', '1');
+  });
+
+  // Init render
+  syncAndRender();
+  // Lance les tests une fois au démarrage pour confirmer que tout fonctionne
+  setTimeout(() => $('#btnRunTests').click(), 200);
+})();
+
+</script>
+
+</body>
+</html>
