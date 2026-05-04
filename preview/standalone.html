@@ -2,11 +2,17 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#1a1030" />
-  <title>PixelQuest – Prévisualisation</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PixelQuest" />
+  <title>PixelQuest – RPG des Pas</title>
   <style>
-/* PixelQuest – Stylesheet (RPG pixel, sombre, lisible). */
+/* PixelQuest – Stylesheet mobile-first.
+ * Cible : Android 412×915 ou plus large. La page se déploie automatiquement
+ * en deux colonnes (phone + watch) sur écrans larges (>= 1100px).
+ */
 
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 
@@ -14,6 +20,8 @@
   --bg0: #0e0820;
   --bg1: #1a1030;
   --bg2: #261847;
+  --bg3: #14082a;
+  --line: #2a1855;
   --fg:  #f5f1ff;
   --muted: #b9aee0;
   --accent: #ffe04a;
@@ -23,491 +31,1103 @@
   --xp:   #6cd0ff;
   --coin: #ffd34a;
   --hp:   #ff5d6c;
-  --shadow: 0 0 0 2px #000, 4px 4px 0 #000;
   --pixel: 'Press Start 2P', monospace;
   --read:  'VT323', monospace;
 }
 
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; overscroll-behavior: contain; }
 body {
   font-family: var(--read);
-  background:
-    repeating-linear-gradient(0deg, #0a0618, #0a0618 2px, #0e0820 2px, #0e0820 4px),
-    radial-gradient(circle at 20% 10%, #2b1855, transparent 40%),
-    radial-gradient(circle at 80% 90%, #1c2d6a, transparent 50%),
-    var(--bg0);
+  background: var(--bg0);
   color: var(--fg);
-  min-height: 100vh;
   font-size: 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-/* Topbar */
+/* ============================ TOP BAR ============================ */
 .topbar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
-  padding: 10px 16px;
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px;
   background: linear-gradient(#1a1030, #120824);
-  border-bottom: 3px solid #000;
-  box-shadow: 0 2px 0 #261847;
-  position: sticky; top: 0; z-index: 10;
+  border-bottom: 2px solid var(--line);
+  flex-shrink: 0;
 }
-.brand { font-family: var(--pixel); font-size: 14px; letter-spacing: 1px; }
-.brand .logo { color: var(--accent); margin-right: 4px; }
-.brand .tag { font-family: var(--read); font-size: 14px; color: var(--muted); margin-left: 8px; }
-.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-left: auto; }
-.controls label { font-size: 14px; color: var(--muted); display: flex; gap: 4px; align-items:center; }
-.controls input[type=number] { width: 70px; }
-button {
-  font-family: var(--pixel);
-  font-size: 10px; letter-spacing: 1px;
-  background: var(--bg2); color: var(--fg);
-  border: 2px solid #000; border-bottom-width: 4px;
-  padding: 8px 10px; cursor: pointer;
-  box-shadow: 2px 2px 0 #000;
-  image-rendering: pixelated;
+.brand {
+  font-family: var(--pixel); font-size: 12px;
+  color: var(--accent);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-button:hover { filter: brightness(1.1); }
-button:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 #000; }
-button.danger { background: #5a1a1a; }
-input[type=number], input[type=date], input[type=text] {
-  background: #0a0618; color: var(--fg); border: 2px solid #000;
-  font-family: var(--read); font-size: 16px; padding: 4px 6px;
-}
-.status { display:flex; align-items:center; gap:6px; font-size: 14px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--bad); display:inline-block; }
-.dot.ok { background: var(--good); box-shadow: 0 0 6px var(--good); }
+.brand .logo { color: var(--accent); }
+.brand .tag { color: var(--muted); font-family: var(--read); font-size: 13px; margin-left: 6px; }
 
+.topbar-actions {
+  display: flex; align-items: center; gap: 6px;
+  flex-shrink: 0;
+}
+.icon-btn {
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--bg2); color: var(--fg);
+  border: 2px solid #000;
+  font-size: 16px; cursor: pointer;
+  font-family: var(--read);
+  padding: 0;
+}
+.icon-btn:active { transform: translate(1px,1px); }
+
+/* Sync dot dans la topbar */
+.sync-status {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 12px; color: var(--muted);
+}
+.sync-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bad);
+  display: inline-block;
+}
+.sync-dot.ok {
+  background: var(--good);
+  box-shadow: 0 0 6px var(--good);
+}
+
+/* ============================ INSTALL HINT ============================ */
 .install-hint {
-  background: #2a1855; color: var(--fg);
-  padding: 8px 12px; font-size: 14px;
+  background: linear-gradient(90deg, #2a1855, #3b1f6a);
+  color: var(--fg);
+  padding: 8px 12px;
+  font-size: 14px;
   border-bottom: 2px solid #000;
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  display: flex; align-items: center; gap: 8px;
 }
 .install-hint b { color: var(--accent); }
-.install-hint button { margin-left: auto; }
+.install-hint button {
+  margin-left: auto;
+  background: var(--accent); color: #000;
+  border: 2px solid #000;
+  padding: 4px 10px;
+  font-family: var(--pixel); font-size: 9px;
+  cursor: pointer;
+}
 
-/* Stage layout */
+/* ============================ STAGE ============================ */
 .stage {
-  display: grid;
-  grid-template-columns: minmax(320px, 380px) minmax(220px, 260px) minmax(280px, 1fr);
-  gap: 18px; padding: 18px;
-  align-items: start;
-}
-@media (max-width: 980px) {
-  .stage { grid-template-columns: 1fr; gap: 14px; padding: 10px; }
-  .phone-screen { height: 78vh; }
-  .watch-frame { width: 200px; height: 200px; }
-  .debug { max-height: 360px; }
-}
-@media (max-width: 520px) {
-  .topbar { gap: 6px; padding: 6px 8px; }
-  .brand { font-size: 11px; }
-  .brand .tag { display: none; }
-  .controls label { font-size: 12px; }
-  .controls input[type=date] { display: none; }
-  .controls input[type=number] { width: 56px; }
-  button { font-size: 9px; padding: 6px 8px; }
-  .stage { padding: 6px; gap: 10px; }
-  .phone-frame { padding: 8px 6px; border-radius: 22px; }
-  .phone-screen { height: 75vh; border-radius: 14px; }
-  .hud { padding: 6px; gap: 6px; }
-  .hud-portrait { width: 44px; height: 44px; }
-  .tabs { padding: 4px; gap: 3px; }
-  .tab { font-size: 7px; padding: 5px 6px; }
-  .tab-pane { padding: 6px; }
-  .shop-grid, .bestiary-grid, .pets-grid, .achievements-list { grid-template-columns: 1fr; }
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.device-label {
-  font-family: var(--pixel); font-size: 10px; color: var(--muted);
-  margin-bottom: 6px; text-align: center;
-}
-.frame {
-  background: #000; padding: 8px;
-  border-radius: 36px;
-  box-shadow: var(--shadow), inset 0 0 0 2px #2a1855;
-}
-.phone-frame { padding: 14px 10px; border-radius: 30px; }
-.watch-frame { padding: 14px; border-radius: 50%; width: 240px; height: 240px; margin: 0 auto; }
-
-.screen {
-  background: linear-gradient(#1a1030,#120824);
-  color: var(--fg);
+/* "Vues" : Phone, Watch, Debug. Une seule visible en mobile. */
+.view {
+  display: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
   overflow: hidden;
-  border: 2px solid #2a1855;
-  position: relative;
+  width: 100%;
 }
-.phone-screen { width: 100%; height: 720px; border-radius: 22px; display: flex; flex-direction: column; }
-.watch-screen { width: 100%; height: 100%; border-radius: 50%; display: flex; flex-direction: column; }
+.view.active { display: flex; flex-direction: column; }
 
-/* HUD */
+/* ============================ PHONE VIEW ============================ */
+.phone-screen {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  background: linear-gradient(#1a1030, #120824);
+  overflow: hidden;
+}
+
+/* HUD compact en haut */
 .hud {
-  display: flex; gap: 8px; padding: 8px;
-  background: #0a0618; border-bottom: 2px solid #2a1855;
+  display: flex; gap: 8px; padding: 6px 8px;
+  background: var(--bg3);
+  border-bottom: 2px solid var(--line);
+  align-items: center;
+  flex-shrink: 0;
 }
-.hud-left { display: flex; gap: 8px; flex: 1 1 auto; align-items: flex-start; }
 .hud-portrait {
-  width: 56px; height: 56px;
-  image-rendering: pixelated;
-  background: #2a1855; border: 2px solid #000;
+  width: 44px; height: 44px;
+  background: var(--bg2);
+  border: 2px solid #000;
+  flex-shrink: 0;
 }
-.hud-info { flex: 1 1 auto; min-width: 0; }
-.hud-name { font-family: var(--pixel); font-size: 10px; margin-bottom: 4px; }
-.hud-bar { margin: 4px 0; }
-.bar { position: relative; height: 14px; background: #000; border: 2px solid #000; overflow: hidden; }
-.bar .fill { height: 100%; transition: width .25s; }
-.bar.xp .fill { background: linear-gradient(90deg,#3aa1ff,#6cd0ff,#a3eaff); }
-.bar.hp .fill { background: linear-gradient(90deg,#7a1a1a,#ff5d6c); }
-.bar span {
+.hud-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+.hud-name {
+  font-family: var(--pixel); font-size: 9px;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.hud-bar {
+  height: 12px;
+  background: #000;
+  border: 1px solid #000;
+  position: relative;
+  overflow: hidden;
+}
+.hud-bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3aa1ff, #6cd0ff, #a3eaff);
+  transition: width .25s;
+}
+.hud-bar span {
   position: absolute; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--pixel); font-size: 8px; color: #fff;
+  font-family: var(--pixel); font-size: 8px;
+  color: #fff;
   text-shadow: 1px 1px 0 #000;
 }
-.hud-line { display: flex; gap: 10px; font-size: 14px; align-items: center; flex-wrap: wrap; }
-.hud-line .lvl { color: var(--accent); font-family: var(--pixel); font-size: 9px; }
-.hud-line .coin { color: var(--coin); }
-.steps-today {
-  text-align: right; font-size: 12px;
-  background: #14082a; border: 2px solid #2a1855; padding: 6px;
-  min-width: 80px;
+.hud-stats {
+  display: flex; gap: 8px; margin-top: 4px;
+  font-size: 12px;
+  flex-wrap: wrap;
 }
-.steps-today .lbl { color: var(--muted); font-size: 11px; }
-.steps-today .val { font-family: var(--pixel); font-size: 14px; color: var(--accent); }
-.steps-today .threshold { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.hud-stats .lvl { color: var(--accent); font-family: var(--pixel); font-size: 9px; }
+.hud-stats .coin { color: var(--coin); }
+.hud-stats .steps { color: var(--xp); font-weight: bold; }
 
-/* Tabs */
+.hud-weather {
+  display: none; /* économise la largeur sur mobile, info dispo dans le hud-stats */
+  flex-direction: column; align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.hud-weather canvas {
+  width: 28px; height: 28px;
+  image-rendering: pixelated;
+}
+.hud-weather .wname {
+  font-size: 10px; color: var(--muted);
+}
+@media (min-width: 380px) {
+  .hud-weather { display: flex; }
+}
+
+/* Threshold bar */
+.threshold-bar {
+  padding: 4px 8px;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.threshold-bar > span:first-child { flex-shrink: 0; }
+.threshold-bar #phoneTLabel { flex-shrink: 0; min-width: 60px; text-align: right; }
+.threshold-bar .tprog {
+  flex: 1; height: 6px; background: #000; border: 1px solid #000;
+  position: relative; overflow: hidden;
+}
+.threshold-bar .tprog .tfill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  transition: width .3s;
+}
+.threshold-bar.active { color: var(--accent); }
+
+/* Tab content */
+.tab-pane {
+  display: none;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 12px;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-pane.active {
+  display: block;
+}
+.tab-pane h3 {
+  font-family: var(--pixel);
+  font-size: 11px;
+  color: var(--accent);
+  margin: 12px 0 8px;
+}
+.tab-pane h3:first-child { margin-top: 0; }
+
+/* Bottom tabs (mobile-first navigation) */
 .tabs {
-  display: flex; flex-wrap: wrap; gap: 4px; padding: 6px;
-  background: #0a0618; border-bottom: 2px solid #2a1855;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--bg3);
+  border-top: 2px solid var(--line);
+  flex-shrink: 0;
+  width: 100%;
 }
 .tab {
-  font-size: 8px; padding: 6px 8px;
-  background: #14082a;
+  background: transparent;
+  border: none;
+  border-top: 3px solid transparent;
+  color: var(--muted);
+  font-family: var(--pixel);
+  font-size: 7px;
+  padding: 8px 2px 6px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 46px;
+  text-align: center;
+  letter-spacing: 0;
+  overflow: hidden;
 }
-.tab.active { background: var(--accent2); color: #1a1030; }
-.tab-pane { display: none; padding: 10px; overflow-y: auto; flex: 1 1 auto; }
-.tab-pane.active { display: block; }
-.tab-pane h3 { font-family: var(--pixel); font-size: 10px; color: var(--accent); margin: 8px 0; }
-.tab-pane h4 { font-family: var(--pixel); font-size: 9px; color: var(--muted); margin: 6px 0; }
+.tab .ticon { font-size: 16px; line-height: 1; }
+.tab.active {
+  color: var(--accent);
+  border-top-color: var(--accent);
+  background: rgba(255, 224, 74, 0.08);
+}
+.tab:active { background: rgba(255, 224, 74, 0.2); }
 
-/* Map */
-.map-container { display: flex; flex-direction: column; gap: 8px; }
+/* Two rows of tabs since we have 8 tabs */
+.tabs-secondary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--bg3);
+  border-top: 1px solid var(--line);
+  flex-shrink: 0;
+  width: 100%;
+}
+
+/* ============================ MAP ============================ */
+.map-container { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .map-grid {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 1px; background: #000; padding: 2px;
-  width: 100%; aspect-ratio: 1;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 1px;
+  background: #000;
+  padding: 2px;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  aspect-ratio: 1 / 1;
 }
-.map-cell { position: relative; image-rendering: pixelated; background-size: cover; }
-.map-cell .marker {
-  position: absolute; inset: 0;
+.map-cell {
+  position: relative;
+  background-color: #3a6f2a;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; text-shadow: 0 0 4px #000;
+  font-size: 14px;
+  text-shadow: 0 0 4px #000;
+  min-height: 0;
+  min-width: 0;
 }
-.map-legend { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--muted); }
-.map-legend .t { display:inline-block; width: 12px; height: 12px; border: 1px solid #000; vertical-align: middle; margin-right: 4px; }
-.map-legend .t.grass { background:#3a6f2a; }
-.map-legend .t.forest{ background:#1f4a17; }
-.map-legend .t.water { background:#3498db; }
-.map-legend .t.sand  { background:#e6c98a; }
-.map-legend .t.stone { background:#7f8c8d; }
+.map-cell.player { background: var(--accent) !important; color: #000; }
+.map-cell.npc-tav { background: #8a4a1a; }
+.map-cell.npc-smith { background: #2c2c2c; }
+.map-cell.npc-sage { background: #5b2a83; }
+.map-cell.npc-breeder { background: #3a6f2a; }
+.map-legend {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  font-size: 12px; color: var(--muted);
+}
+.map-legend i {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border: 1px solid #000;
+  vertical-align: middle;
+  margin-right: 3px;
+}
+.map-legend .grass { background: #3a6f2a; }
+.map-legend .forest { background: #1f4a17; }
+.map-legend .water { background: #3498db; }
+.map-legend .sand { background: #e6c98a; }
+.map-legend .stone { background: #7f8c8d; }
 
 .dialogue {
-  background: #0a0618; border: 2px solid #2a1855; padding: 8px;
-  font-size: 16px; line-height: 1.3; min-height: 56px;
+  background: var(--bg3);
+  border: 2px solid var(--line);
+  padding: 12px;
+  font-size: 16px;
+  line-height: 1.4;
+  margin-top: 4px;
 }
-.dialogue .who { font-family: var(--pixel); font-size: 9px; color: var(--accent); display:block; margin-bottom: 4px; }
-
-/* Quêtes */
-.quest-list { display: flex; flex-direction: column; gap: 6px; }
-.quest {
-  background: #0a0618; border: 2px solid #2a1855; padding: 8px;
+.dialogue .who {
+  font-family: var(--pixel);
+  font-size: 9px;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 6px;
 }
-.quest .qhead { display:flex; justify-content:space-between; align-items:center; }
-.quest .qname { font-family: var(--pixel); font-size: 10px; }
-.quest .qprog { font-size: 12px; color: var(--muted); }
-.quest .qbar { height: 8px; background: #000; margin: 4px 0; }
-.quest .qbar .qfill { height: 100%; background: var(--good); }
-.quest .qact { display: flex; gap: 4px; margin-top: 4px; flex-wrap: wrap; }
 
-/* Shop / Inventory */
-.shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+/* ============================ CARDS ============================ */
+.card {
+  background: var(--bg3);
+  border: 2px solid var(--line);
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.card h4 {
+  font-family: var(--pixel);
+  font-size: 10px;
+  color: var(--accent);
+  margin: 0 0 6px;
+}
+.card .desc {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.card .meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+.card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+/* Quest progress bar */
+.qbar {
+  height: 8px;
+  background: #000;
+  border: 1px solid #000;
+  margin: 6px 0;
+  position: relative;
+  overflow: hidden;
+}
+.qbar .qfill {
+  height: 100%;
+  background: var(--good);
+  transition: width .3s;
+}
+.qprice { color: var(--coin); font-weight: bold; }
+
+/* Buttons */
+.btn {
+  background: var(--bg2);
+  color: var(--fg);
+  border: 2px solid #000;
+  border-bottom-width: 4px;
+  padding: 8px 12px;
+  font-family: var(--pixel);
+  font-size: 10px;
+  cursor: pointer;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn:active {
+  transform: translate(1px, 1px);
+  border-bottom-width: 2px;
+  margin-bottom: 2px;
+}
+.btn.primary {
+  background: var(--accent);
+  color: #000;
+}
+.btn.danger {
+  background: #5a1a1a;
+}
+.btn.full {
+  width: 100%;
+}
+.btn.small {
+  font-size: 8px;
+  padding: 6px 10px;
+  min-height: 30px;
+}
+
+/* Item / shop grid */
+.item-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
 .item {
-  background: #0a0618; border: 2px solid #2a1855; padding: 6px;
-  display: flex; flex-direction: column; gap: 4px;
+  background: var(--bg3);
+  border: 2px solid var(--line);
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
-.item .iname { font-family: var(--pixel); font-size: 9px; }
-.item .iprice { color: var(--coin); font-size: 12px; }
-.item .idesc { color: var(--muted); font-size: 12px; }
-.item button { font-size: 8px; padding: 4px 6px; }
-
-.hint { color: var(--bad); font-size: 14px; }
-
-/* Bestiary */
-.bestiary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.bestiary-card {
-  background: #0a0618; border: 2px solid #2a1855; padding: 6px;
-  display: flex; gap: 6px; align-items: center;
+.item-info {
+  flex: 1;
+  min-width: 0;
 }
-.bestiary-card canvas { image-rendering: pixelated; }
-.bestiary-card .info { flex: 1 1 auto; min-width: 0; }
-.bestiary-card .name { font-family: var(--pixel); font-size: 9px; }
-.bestiary-card .meta { font-size: 12px; color: var(--muted); }
-.bestiary-card.locked { filter: grayscale(1) brightness(0.5); }
+.item-name {
+  font-family: var(--pixel);
+  font-size: 10px;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+.item-desc {
+  font-size: 13px;
+  color: var(--muted);
+}
+.item-price {
+  color: var(--coin);
+  font-weight: bold;
+  font-size: 14px;
+}
+.item-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
 
-/* Pets */
-.pets-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+/* Bestiary card with sprite */
+.beast-card {
+  display: flex; gap: 10px;
+  align-items: center;
+  background: var(--bg3);
+  border: 2px solid var(--line);
+  padding: 10px;
+  margin-bottom: 8px;
+}
+.beast-card.locked { filter: grayscale(1) brightness(0.5); }
+.beast-sprite {
+  width: 64px; height: 64px;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+  background: var(--bg1);
+  border: 1px solid var(--line);
+}
+.beast-info { flex: 1; min-width: 0; }
+
+/* Pet card */
 .pet-card {
-  background: #0a0618; border: 2px solid #2a1855; padding: 6px;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: var(--bg3);
+  border: 2px solid var(--line);
+  padding: 10px;
+  display: flex; gap: 10px;
+  align-items: center;
+  margin-bottom: 8px;
 }
-.egg-status {
-  background: #14082a; border: 2px solid #d36cb0; padding: 8px;
-  margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+.pet-card.locked { filter: grayscale(1) brightness(0.5); }
+
+/* Egg in incubation */
+.egg-card {
+  background: linear-gradient(135deg, #2a1855, #14082a);
+  border: 2px solid var(--accent2);
+  padding: 12px;
+  margin-bottom: 12px;
+  display: flex; gap: 10px;
+  align-items: center;
 }
 
 /* Raid */
 .raid-card {
-  display: flex; flex-direction: column; align-items: center; gap: 8px;
-  padding: 8px; background: #0a0618; border: 2px solid var(--bad);
+  background: linear-gradient(135deg, #2a0a0a, #14082a);
+  border: 2px solid var(--bad);
+  padding: 16px;
+  text-align: center;
 }
-.raid-card canvas { image-rendering: pixelated; }
-.raid-card .raid-name { font-family: var(--pixel); font-size: 12px; color: var(--accent); }
-.raid-bar { width: 100%; height: 18px; background: #000; border: 2px solid #000; position: relative; }
-.raid-bar .rfill { height: 100%; background: linear-gradient(90deg,#7a1a1a,#ff5d6c); transition: width .3s; }
+.raid-sprite {
+  width: 128px; height: 128px;
+  image-rendering: pixelated;
+  margin: 0 auto 12px;
+  display: block;
+}
+.raid-name {
+  font-family: var(--pixel);
+  font-size: 12px;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.raid-bar {
+  width: 100%;
+  height: 18px;
+  background: #000;
+  border: 2px solid #000;
+  position: relative;
+  margin: 8px 0;
+  overflow: hidden;
+}
+.raid-bar .rfill {
+  height: 100%;
+  background: linear-gradient(90deg, #7a1a1a, #ff5d6c);
+  transition: width .3s;
+}
 .raid-bar span {
-  position: absolute; inset: 0; display:flex; align-items:center; justify-content:center;
-  font-family: var(--pixel); font-size: 9px; color: #fff; text-shadow: 1px 1px 0 #000;
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--pixel); font-size: 9px;
+  color: #fff; text-shadow: 1px 1px 0 #000;
 }
-.raid-info { font-size: 14px; color: var(--muted); text-align: center; }
-
-/* Personnage */
-#phoneCharBuilder { display: flex; flex-direction: column; gap: 10px; }
-.char-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.char-row label { font-family: var(--pixel); font-size: 9px; color: var(--muted); }
-.class-grid, .hair-grid, .color-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.class-card, .swatch {
-  background: #0a0618; border: 2px solid #2a1855; padding: 6px;
-  cursor: pointer; text-align: center;
-}
-.class-card.active, .swatch.active { border-color: var(--accent); background: #2a1855; }
-.swatch { padding: 16px; }
-.preview-hero {
-  align-self: center;
-  background: #2a1855; border: 2px solid #000; padding: 8px;
-}
-.preview-hero canvas { image-rendering: pixelated; }
 
 /* Achievements */
-.achievements-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-.ach { background: #0a0618; border: 2px solid #2a1855; padding: 6px; font-size: 13px; }
+.ach-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+.ach {
+  background: var(--bg3);
+  border: 2px solid var(--line);
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.ach.unlocked {
+  border-color: var(--accent);
+  background: linear-gradient(90deg, #2a1855, var(--bg3));
+}
 .ach.locked { opacity: 0.4; }
-.ach.unlocked { border-color: var(--accent); }
+.ach .star { color: var(--accent); font-size: 16px; }
 .ach .aname { font-family: var(--pixel); font-size: 9px; }
 
-/* Watch */
+/* Character builder */
+.char-preview {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+.char-preview canvas {
+  width: 128px; height: 128px;
+  image-rendering: pixelated;
+  background: var(--bg2);
+  border: 2px solid #000;
+}
+.char-row {
+  margin-bottom: 16px;
+}
+.char-row label {
+  display: block;
+  font-family: var(--pixel);
+  font-size: 9px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.char-row input[type=text] {
+  width: 100%;
+  background: #000;
+  color: var(--fg);
+  border: 2px solid var(--line);
+  padding: 8px;
+  font-family: var(--read);
+  font-size: 16px;
+}
+.class-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+.class-card {
+  background: var(--bg3);
+  border: 2px solid var(--line);
+  padding: 8px;
+  cursor: pointer;
+  text-align: center;
+}
+.class-card.active {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, #2a1855, var(--bg3));
+}
+.class-card .cname {
+  font-family: var(--pixel);
+  font-size: 9px;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.class-card .cdesc {
+  font-size: 12px;
+  color: var(--muted);
+}
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.swatch {
+  aspect-ratio: 1;
+  border: 3px solid #000;
+  cursor: pointer;
+}
+.swatch.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.style-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.style-btn {
+  background: var(--bg3);
+  border: 2px solid var(--line);
+  color: var(--fg);
+  padding: 10px 4px;
+  font-family: var(--pixel);
+  font-size: 8px;
+  cursor: pointer;
+}
+.style-btn.active {
+  background: var(--accent2);
+  border-color: var(--accent);
+  color: #000;
+}
+
+/* ============================ FAB (floating action button) ============================ */
+.fab {
+  position: fixed;
+  right: 12px;
+  /* Bottom = au-dessus des 2 rangées de tabs (~96px) + petite marge */
+  bottom: 110px;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #000;
+  border: 3px solid #000;
+  box-shadow: 0 4px 0 #000, 0 6px 12px rgba(0,0,0,0.5);
+  font-family: var(--pixel);
+  font-size: 9px;
+  line-height: 1.2;
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.fab:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #000, 0 4px 8px rgba(0,0,0,0.5);
+}
+
+/* Step input drawer */
+.step-drawer {
+  position: fixed;
+  right: 12px;
+  bottom: 184px;
+  background: var(--bg3);
+  border: 2px solid var(--line);
+  padding: 10px;
+  z-index: 99;
+  display: none;
+  flex-direction: column;
+  gap: 8px;
+  width: 200px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.step-drawer.visible { display: flex; }
+.step-drawer label { font-size: 12px; color: var(--muted); }
+.step-drawer input[type=number] {
+  background: #000;
+  border: 2px solid var(--line);
+  color: var(--fg);
+  padding: 6px;
+  font-family: var(--read);
+  font-size: 16px;
+  width: 100%;
+}
+
+/* ============================ WATCH VIEW ============================ */
+.watch-view {
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: radial-gradient(circle at center, #1a1030, #0e0820 70%);
+}
+.watch-frame {
+  width: min(280px, 80vw);
+  aspect-ratio: 1;
+  background: #000;
+  border-radius: 50%;
+  padding: 16px;
+  position: relative;
+  box-shadow: 0 0 0 4px var(--line), 0 8px 32px rgba(0,0,0,0.7);
+}
+.watch-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(#1a1030, #120824);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
 .watch-content {
-  flex: 1 1 auto;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 6px; text-align: center;
+  flex: 1; display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  gap: 6px;
 }
 .watch-content canvas { image-rendering: pixelated; }
-.watch-content .w-row { display: flex; align-items: center; gap: 4px; }
-.watch-content .w-num { font-family: var(--pixel); font-size: 12px; color: var(--accent); }
-.watch-content .w-lbl { font-size: 11px; color: var(--muted); }
-.watch-bar { width: 80%; height: 8px; background: #000; border: 1px solid #000; margin: 3px auto; position: relative; }
-.watch-bar .fill { height: 100%; background: linear-gradient(90deg,#3aa1ff,#6cd0ff); }
+.watch-content .w-num {
+  font-family: var(--pixel);
+  font-size: 14px;
+  color: var(--accent);
+}
+.watch-content .w-lbl {
+  font-size: 12px;
+  color: var(--muted);
+}
+.watch-bar {
+  width: 100%;
+  height: 8px;
+  background: #000;
+  border: 1px solid #000;
+  position: relative;
+  overflow: hidden;
+}
+.watch-bar .fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3aa1ff, #6cd0ff);
+}
 .watch-tabs {
-  display: flex; gap: 2px; padding: 2px; justify-content: center;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  padding: 6px;
 }
-.wtab { font-size: 8px; padding: 4px 6px; min-width: 24px; }
-.wtab.active { background: var(--accent); color: #1a1030; }
+.wtab {
+  width: 28px; height: 28px;
+  border: 2px solid #000;
+  background: var(--bg2);
+  color: var(--fg);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.wtab.active {
+  background: var(--accent);
+  color: #000;
+}
+.watch-help {
+  margin-top: 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  max-width: 280px;
+}
 
-/* Debug */
-.debug {
-  background: #0a0618; border: 2px solid #2a1855; padding: 12px;
-  display: flex; flex-direction: column; gap: 8px;
-  font-size: 14px; min-height: 200px; max-height: 720px;
+/* ============================ DEBUG VIEW ============================ */
+.debug-view {
+  padding: 12px;
+  flex-direction: column;
+  gap: 8px;
 }
-.debug h3 { font-family: var(--pixel); font-size: 11px; color: var(--accent); margin: 0; }
-.debug h4 { font-family: var(--pixel); font-size: 9px; color: var(--muted); margin: 4px 0 0; }
-.debug-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.debug-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
 .debug-log {
-  background: #000; color: #aef0c1; border: 2px solid #2a1855;
-  padding: 8px; flex: 1 1 auto; overflow-y: auto;
-  font-family: var(--read); font-size: 14px; line-height: 1.3;
-  white-space: pre-wrap; word-break: break-word;
+  background: #000;
+  color: #aef0c1;
+  border: 2px solid var(--line);
+  padding: 10px;
+  font-family: var(--read);
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
   margin: 0;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 160px;
+  max-height: 360px;
 }
-.debug-log.small { font-size: 13px; max-height: 120px; }
 .debug-log .ok  { color: #2ecc71; }
 .debug-log .ko  { color: #ff5d6c; }
 .debug-log .fix { color: #ffe04a; }
 .debug-log .info{ color: #6cd0ff; }
 
+.debug-view h3 {
+  font-family: var(--pixel);
+  font-size: 11px;
+  color: var(--accent);
+  margin: 8px 0 4px;
+}
+
+/* ============================ HINT MESSAGES ============================ */
+.hint-warn {
+  background: rgba(231, 76, 60, 0.15);
+  border-left: 4px solid var(--bad);
+  color: var(--bad);
+  padding: 10px;
+  font-size: 14px;
+  margin: 8px 0;
+}
+
+/* ============================ TOAST ============================ */
+.toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.95);
+  color: var(--fg);
+  border: 2px solid var(--accent);
+  padding: 10px 16px;
+  font-size: 14px;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .3s;
+  max-width: 90vw;
+  text-align: center;
+}
+.toast.visible { opacity: 1; }
+.toast.success { border-color: var(--good); }
+.toast.error { border-color: var(--bad); }
+
+/* ============================ DESKTOP ENHANCE ============================ */
+@media (min-width: 1100px) {
+  .stage {
+    flex-direction: row;
+    gap: 16px;
+    padding: 16px;
+    align-items: stretch;
+  }
+  .view {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1;
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .view-phone { flex: 1.2; max-width: 480px; }
+  .view-watch { flex: 0 0 320px; }
+  .view-debug { flex: 1; max-width: 400px; }
+  .view-switcher { display: none !important; }
+  .fab { right: 50%; transform: translateX(560px); }
+}
+
+/* ============================ VIEW SWITCHER ============================ */
+.view-switcher {
+  display: flex;
+  background: var(--bg3);
+  border-bottom: 2px solid var(--line);
+  flex-shrink: 0;
+}
+.view-switcher button {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-family: var(--pixel);
+  font-size: 9px;
+  padding: 10px 4px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.view-switcher button.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
 </style>
   </head>
 <body>
+
   <header class="topbar">
     <div class="brand">
       <span class="logo">⚔︎</span> PixelQuest
-      <span class="tag">RPG · Pas · Aventure</span>
+      <span class="tag">RPG · Pas</span>
     </div>
-    <div class="controls">
-      <label>Pas simulés <input id="simSteps" type="number" min="1" max="500" value="50" /></label>
-      <button id="btnAddSteps">+ Pas</button>
-      <button id="btnTick">Auto</button>
-      <label>Date <input id="simDate" type="date" /></label>
-      <button id="btnReset" class="danger">Reset</button>
-      <button id="btnInstall" style="display:none">Installer</button>
-    </div>
-    <div class="status">
-      <span id="syncDot" class="dot ok"></span>
-      <span id="syncLabel">Sync ✓ Phone ↔ Watch</span>
+    <div class="topbar-actions">
+      <span class="sync-status">
+        <span id="syncDot" class="sync-dot ok"></span>
+        <span id="syncLabel">Sync ✓</span>
+      </span>
+      <button id="btnInstall" class="icon-btn" style="display:none" title="Installer">⤓</button>
+      <button id="btnReset" class="icon-btn" title="Réinitialiser">⟲</button>
     </div>
   </header>
 
   <div id="installHint" class="install-hint" style="display:none">
-    Astuce : pour avoir PixelQuest comme une vraie appli sur ton Android,
-    ouvre le menu de Chrome (⋮) → « <b>Installer l'application</b> » ou
-    « Ajouter à l'écran d'accueil ».
+    Menu Chrome ⋮ → <b>Installer l'app</b>
     <button id="closeHint">OK</button>
   </div>
 
+  <!-- Mobile : un seul écran à la fois. View switcher en haut. -->
+  <nav class="view-switcher">
+    <button data-view="phone" class="active">📱 Phone</button>
+    <button data-view="watch">⌚ Watch</button>
+    <button data-view="debug">🔧 Debug</button>
+  </nav>
+
   <main class="stage">
-    <!-- ============================== PHONE ============================== -->
-    <section class="device phone" aria-label="Aperçu téléphone">
-      <div class="device-label">Téléphone Android</div>
-      <div class="frame phone-frame">
-        <div class="screen phone-screen" id="phoneScreen">
-          <!-- HUD -->
-          <div class="hud">
-            <div class="hud-left">
-              <canvas class="hud-portrait" id="phoneHero" width="16" height="16"></canvas>
-              <div class="hud-info">
-                <div class="hud-name" id="phoneName">Aventurier</div>
-                <div class="hud-bar">
-                  <div class="bar xp"><div id="phoneXpFill" class="fill"></div><span id="phoneXpLabel">XP</span></div>
-                </div>
-                <div class="hud-line">
-                  <span class="lvl">Niv. <b id="phoneLvl">1</b></span>
-                  <span class="coin">🪙 <b id="phoneCoins">0</b></span>
-                  <span class="weather" id="phoneWeather"></span>
-                </div>
-              </div>
+
+    <!-- ============================== PHONE VIEW ============================== -->
+    <section class="view view-phone active" data-vid="phone">
+      <div class="phone-screen">
+
+        <!-- HUD -->
+        <div class="hud">
+          <canvas class="hud-portrait" id="phoneHero" width="16" height="16"></canvas>
+          <div class="hud-info">
+            <div class="hud-name" id="phoneName">Aventurier · Guerrier</div>
+            <div class="hud-bar">
+              <div id="phoneXpFill" class="fill" style="width:0%"></div>
+              <span id="phoneXpLabel">0 / 100 XP</span>
             </div>
-            <div class="hud-right">
-              <div class="steps-today">
-                <div class="lbl">Pas du jour</div>
-                <div class="val" id="phoneDailySteps">0</div>
-                <div class="threshold" id="phoneThreshold">Seuil 8000 : –</div>
-              </div>
+            <div class="hud-stats">
+              <span class="lvl">Niv. <b id="phoneLvl">1</b></span>
+              <span class="coin">🪙 <b id="phoneCoins">50</b></span>
+              <span class="steps">👣 <b id="phoneDailySteps">0</b></span>
             </div>
           </div>
-
-          <!-- Tabs -->
-          <nav class="tabs">
-            <button class="tab active" data-tab="map">Carte</button>
-            <button class="tab" data-tab="quests">Quêtes</button>
-            <button class="tab" data-tab="shop">Boutique</button>
-            <button class="tab" data-tab="bestiary">Bestiaire</button>
-            <button class="tab" data-tab="pets">Familiers</button>
-            <button class="tab" data-tab="raid">Raid</button>
-            <button class="tab" data-tab="char">Personnage</button>
-            <button class="tab" data-tab="achievements">Succès</button>
-          </nav>
-
-          <!-- Tab content -->
-          <div class="tab-pane active" data-pane="map">
-            <div class="map-container">
-              <div class="map-grid" id="phoneMap"></div>
-              <div class="map-legend">
-                <span><i class="t grass"></i> Plaines</span>
-                <span><i class="t forest"></i> Forêt</span>
-                <span><i class="t water"></i> Eau</span>
-                <span><i class="t sand"></i> Sable</span>
-                <span><i class="t stone"></i> Pierre</span>
-              </div>
-              <div class="dialogue" id="phoneDialogue"></div>
-            </div>
-          </div>
-
-          <div class="tab-pane" data-pane="quests">
-            <h3>Quêtes actives</h3>
-            <div id="phoneActiveQuests" class="quest-list"></div>
-            <h3>Disponibles</h3>
-            <div id="phoneAvailableQuests" class="quest-list"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="shop">
-            <h3>Boutique – Hilda la Taverniere</h3>
-            <div id="phoneShop" class="shop-grid"></div>
-            <h3>Inventaire (<span id="phoneInvCount">0</span>/40)</h3>
-            <div id="phoneInv" class="shop-grid"></div>
-            <p class="hint" id="phoneEncumbered"></p>
-          </div>
-
-          <div class="tab-pane" data-pane="bestiary">
-            <h3>Bestiaire</h3>
-            <div id="phoneBestiary" class="bestiary-grid"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="pets">
-            <h3>Familiers</h3>
-            <div id="phoneEgg" class="egg-status"></div>
-            <div id="phonePets" class="pets-grid"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="raid">
-            <h3>Raid hebdomadaire</h3>
-            <div class="raid-card" id="phoneRaid"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="char">
-            <h3>Création / Personnage</h3>
-            <div id="phoneCharBuilder"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="achievements">
-            <h3>Succès</h3>
-            <div id="phoneAchievements" class="achievements-list"></div>
+          <div class="hud-weather">
+            <canvas id="phoneWeatherIcon" width="16" height="16"></canvas>
+            <span class="wname" id="phoneWeatherName">—</span>
           </div>
         </div>
+
+        <!-- Threshold bar 8000 -->
+        <div class="threshold-bar" id="phoneThreshold">
+          <span>x2 :</span>
+          <div class="tprog"><div class="tfill" id="phoneTFill" style="width:0%"></div></div>
+          <span id="phoneTLabel">0/8000</span>
+        </div>
+
+        <!-- Tab content -->
+        <div class="tab-pane active" data-pane="map">
+          <h3>Carte du Royaume Pas-Vert</h3>
+          <div class="map-container">
+            <div class="map-grid" id="phoneMap"></div>
+            <div class="map-legend">
+              <span><i class="grass"></i>Plaines</span>
+              <span><i class="forest"></i>Forêt</span>
+              <span><i class="water"></i>Eau</span>
+              <span><i class="sand"></i>Sable</span>
+              <span><i class="stone"></i>Pierre</span>
+            </div>
+            <div class="dialogue" id="phoneDialogue"></div>
+          </div>
+        </div>
+
+        <div class="tab-pane" data-pane="quests">
+          <h3>Quêtes actives</h3>
+          <div id="phoneActiveQuests"></div>
+          <h3>Disponibles</h3>
+          <div id="phoneAvailableQuests"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="shop">
+          <h3>Boutique – Hilda la Tavernière</h3>
+          <div id="phoneShop" class="item-grid"></div>
+          <h3>Inventaire (<span id="phoneInvCount">0</span>/40)</h3>
+          <div id="phoneInv" class="item-grid"></div>
+          <p id="phoneEncumbered" class="hint-warn" style="display:none">
+            ⚠ Encombrement : 110 pas pour 100 XP. Vendez à la Taverne.
+          </p>
+        </div>
+
+        <div class="tab-pane" data-pane="bestiary">
+          <h3>Bestiaire</h3>
+          <div id="phoneBestiary"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="pets">
+          <h3>Familiers</h3>
+          <div id="phoneEgg"></div>
+          <div id="phonePets"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="raid">
+          <h3>Raid hebdomadaire</h3>
+          <div id="phoneRaid"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="char">
+          <h3>Personnage</h3>
+          <div id="phoneCharBuilder"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="achievements">
+          <h3>Succès</h3>
+          <div id="phoneAchievements" class="ach-grid"></div>
+        </div>
+
+        <!-- Bottom navigation : 8 onglets sur 2 lignes -->
+        <nav class="tabs">
+          <button class="tab active" data-tab="map"><span class="ticon">🗺️</span>Carte</button>
+          <button class="tab" data-tab="quests"><span class="ticon">⚑</span>Quêtes</button>
+          <button class="tab" data-tab="shop"><span class="ticon">🪙</span>Shop</button>
+          <button class="tab" data-tab="bestiary"><span class="ticon">🐉</span>Mobs</button>
+        </nav>
+        <nav class="tabs-secondary">
+          <button class="tab" data-tab="pets"><span class="ticon">🥚</span>Pets</button>
+          <button class="tab" data-tab="raid"><span class="ticon">⚔️</span>Raid</button>
+          <button class="tab" data-tab="char"><span class="ticon">🧙</span>Perso</button>
+          <button class="tab" data-tab="achievements"><span class="ticon">🏆</span>Succès</button>
+        </nav>
       </div>
     </section>
 
-    <!-- ============================== WATCH ============================== -->
-    <section class="device watch" aria-label="Aperçu Wear OS">
-      <div class="device-label">Wear OS</div>
-      <div class="frame watch-frame">
-        <div class="screen watch-screen" id="watchScreen">
-          <div class="watch-content" id="watchContent">
-            <!-- contenu rendu en JS -->
+    <!-- ============================== WATCH VIEW ============================== -->
+    <section class="view view-watch watch-view" data-vid="watch">
+      <div class="watch-frame">
+        <div class="watch-screen" id="watchScreen">
+          <div class="watch-content" id="watchContent"></div>
+          <div class="watch-tabs">
+            <button class="wtab active" data-wtab="main" title="Principal">●</button>
+            <button class="wtab" data-wtab="quest" title="Quête">⚑</button>
+            <button class="wtab" data-wtab="raid" title="Raid">⚔</button>
+            <button class="wtab" data-wtab="pet" title="Familier">★</button>
           </div>
-          <nav class="watch-tabs">
-            <button class="wtab active" data-wtab="main">●</button>
-            <button class="wtab" data-wtab="quest">⚑</button>
-            <button class="wtab" data-wtab="raid">⚔</button>
-            <button class="wtab" data-wtab="pet">★</button>
-          </nav>
         </div>
       </div>
+      <p class="watch-help">
+        La montre affiche un résumé synchronisé avec ton téléphone.
+        Sur Wear OS, ce sera la même chose, en vrai.
+      </p>
     </section>
 
-    <!-- ============================== DEBUG ============================== -->
-    <aside class="debug" aria-label="Panneau debug">
+    <!-- ============================== DEBUG VIEW ============================== -->
+    <section class="view view-debug debug-view" data-vid="debug">
       <h3>Debugger auto-correctif</h3>
       <div class="debug-actions">
-        <button id="btnRunTests">▶ Lancer tests</button>
-        <button id="btnAutoFix">⚙ Auto-fix</button>
-        <button id="btnExport">⤓ Exporter état</button>
+        <button class="btn small" id="btnRunTests">▶ Tests</button>
+        <button class="btn small" id="btnAutoFix">⚙ Auto-fix</button>
+        <button class="btn small" id="btnExport">⤓ Export</button>
+        <button class="btn small" id="btnTick">⏱ Tick auto 10s</button>
       </div>
+      <h3>Sortie</h3>
       <pre id="debugLog" class="debug-log">Prêt.</pre>
-      <h4>Anti-triche – flags récents</h4>
-      <pre id="cheatLog" class="debug-log small"></pre>
-    </aside>
+      <h3>Anti-triche – flags récents</h3>
+      <pre id="cheatLog" class="debug-log">Aucune anomalie.</pre>
+    </section>
+
   </main>
+
+  <!-- FAB : ajouter des pas (toujours visible) -->
+  <button class="fab" id="btnAddSteps" title="Ajouter des pas">+50<br>👣</button>
+  <div class="step-drawer" id="stepDrawer">
+    <label>Pas à ajouter :</label>
+    <input id="simSteps" type="number" min="1" max="500" value="50" />
+    <button class="btn small" id="btnAddCustom">+ Ajouter</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
 <script>
 // === js/engine.js ===
 /* PixelQuest – Moteur de jeu (preview JS).
@@ -1927,7 +2547,10 @@ input[type=number], input[type=date], input[type=text] {
 
 
 // === js/ui.js ===
-/* PixelQuest – UI preview (téléphone + montre + debugger). */
+/* PixelQuest – UI mobile-first.
+ * Logique : 3 vues (phone, watch, debug). Phone a 8 onglets en bottom-nav.
+ * Tout est cliquable, tout doit fonctionner sur Android Chrome.
+ */
 (function () {
   'use strict';
 
@@ -1938,42 +2561,7 @@ input[type=number], input[type=date], input[type=text] {
 
   const STORE_KEY = 'pixelquest_state_v1';
 
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORE_KEY);
-      if (!raw) return PQ.defaultState();
-      const s = JSON.parse(raw);
-      // run autoFix au chargement, au cas où
-      PT.autoFix(s);
-      return s;
-    } catch (e) {
-      console.warn('Erreur chargement, état neuf', e);
-      return PQ.defaultState();
-    }
-  }
-  function saveState(s) {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch (e) {}
-  }
-
-  let state = loadState();
-  let activeTab = 'map';
-  let activeWatchTab = 'main';
-  let lastDialogue = null;
-  let tickerHandle = null;
-
-  // ------ Personnage par défaut si premier lancement ------
-  if (!state.character) {
-    state.character = {
-      name: 'Aventurier',
-      classId: 'guerrier',
-      hair: 'short',
-      hairColor: '#8b4513',
-      skin: '#f4c79a',
-    };
-    saveState(state);
-  }
-
-  // ------ Helpers UI --------------------------------------------------------
+  // Helpers DOM ---------------------------------------------------------------
   function $(sel, root) { return (root || document).querySelector(sel); }
   function $$(sel, root) { return Array.from((root || document).querySelectorAll(sel)); }
   function el(tag, cls, html) {
@@ -1986,37 +2574,149 @@ input[type=number], input[type=date], input[type=text] {
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
-  // ------ Heros canvas ------------------------------------------------------
-  function paintHeroInto(canvas, charOverride) {
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    const c = charOverride || state.character;
-    const sprite = PS.makeSprite('hero', { skin: c.skin, hairColor: c.hairColor, classId: c.classId });
-    ctx.drawImage(sprite, 0, 0, canvas.width, canvas.height);
+  // State management ----------------------------------------------------------
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return PQ.defaultState();
+      const s = JSON.parse(raw);
+      PT.autoFix(s);
+      return s;
+    } catch (e) {
+      return PQ.defaultState();
+    }
+  }
+  function saveState(s) {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(s)); } catch (e) {}
   }
 
-  // ------ Render PHONE ------------------------------------------------------
+  let state = loadState();
+  if (!state.character) {
+    state.character = {
+      name: 'Aventurier', classId: 'guerrier',
+      hair: 'short', hairColor: '#8b4513', skin: '#f4c79a',
+    };
+    saveState(state);
+  }
+
+  let activeTab = 'map';
+  let activeWatchTab = 'main';
+  let activeView = 'phone';
+  let tickerHandle = null;
+
+  // ----- Sprites helpers -----------------------------------------------------
+  /** Dessine un sprite généré (offscreen) sur un canvas cible (à n'importe
+   *  quelle taille). Conserve le rendu pixel art. */
+  function paintSpriteToCanvas(targetCanvas, kind, opts) {
+    if (!targetCanvas) return;
+    const sourceCanvas = PS.makeSprite(kind, opts || {}, kind === 'boss_dragon' ? 32 : 16);
+    const ctx = targetCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+    // Si le canvas cible a la même taille que la source, drawImage direct.
+    // Sinon, on étire en pixelated (grâce à imageSmoothingEnabled=false).
+    ctx.drawImage(sourceCanvas, 0, 0, targetCanvas.width, targetCanvas.height);
+  }
+
+  /** Retourne un nouveau canvas DOM avec le sprite voulu, à la taille
+   *  d'affichage (px CSS). Le canvas interne reste en taille pixel art. */
+  function spriteCanvas(kind, displaySize, opts) {
+    const baseSize = kind === 'boss_dragon' ? 32 : 16;
+    const c = document.createElement('canvas');
+    c.width = baseSize; c.height = baseSize;
+    c.style.width = displaySize + 'px';
+    c.style.height = displaySize + 'px';
+    c.style.imageRendering = 'pixelated';
+    paintSpriteToCanvas(c, kind, opts);
+    return c;
+  }
+
+  // ----- View switcher -------------------------------------------------------
+  $$('.view-switcher button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.view;
+      $$('.view-switcher button').forEach(b => b.classList.toggle('active', b === btn));
+      $$('.view').forEach(v => v.classList.toggle('active', v.dataset.vid === target));
+      activeView = target;
+      // Cacher le FAB sauf en vue phone
+      $('#btnAddSteps').style.display = target === 'phone' ? '' : 'none';
+      $('#stepDrawer').classList.remove('visible');
+      if (target === 'watch') renderWatch();
+    });
+  });
+
+  // ----- Phone tabs ----------------------------------------------------------
+  $$('.tab').forEach(t => t.addEventListener('click', () => {
+    $$('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    activeTab = t.dataset.tab;
+    $$('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.pane === activeTab));
+    renderPhonePane();
+  }));
+
+  // ----- Watch tabs ----------------------------------------------------------
+  $$('.wtab').forEach(t => t.addEventListener('click', () => {
+    $$('.wtab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    activeWatchTab = t.dataset.wtab;
+    renderWatch();
+  }));
+
+  // ----- Toast ---------------------------------------------------------------
+  let toastTimeout = null;
+  function toast(msg, kind) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.className = 'toast visible' + (kind ? ' ' + kind : '');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => t.classList.remove('visible'), 2400);
+  }
+
+  // ----- Render PHONE --------------------------------------------------------
   function renderPhone() {
     // HUD
-    paintHeroInto($('#phoneHero'));
-    $('#phoneName').textContent = state.character.name + ' · ' + (PQ.CLASSES.find(c=>c.id===state.character.classId)||{name:'?'}).name;
+    paintSpriteToCanvas($('#phoneHero'), 'hero', {
+      skin: state.character.skin,
+      hairColor: state.character.hairColor,
+      classId: state.character.classId,
+    });
+    const klass = PQ.CLASSES.find(c => c.id === state.character.classId);
+    $('#phoneName').textContent = state.character.name + ' · ' + (klass ? klass.name : '?');
     $('#phoneLvl').textContent = state.level;
     $('#phoneCoins').textContent = state.coins;
-    const need = PQ.xpForLevel(state.level);
-    $('#phoneXpFill').style.width = Math.min(100, (state.xp/need)*100) + '%';
-    $('#phoneXpLabel').textContent = state.xp + ' / ' + need + ' XP';
     $('#phoneDailySteps').textContent = state.dailySteps;
-    const thresh = PQ.CONFIG.DAILY_BONUS_THRESHOLD;
-    $('#phoneThreshold').textContent = state.dailySteps >= thresh
-      ? '✓ Bonus x2 actif !'
-      : 'Seuil ' + thresh + ' : ' + Math.max(0, thresh-state.dailySteps) + ' restants';
-    const wx = PQ.WEATHERS.find(w=>w.id===state.weatherId) || PQ.WEATHERS[0];
-    $('#phoneWeather').innerHTML = '';
-    $('#phoneWeather').appendChild(PS.makeSprite('wx_'+wx.id, {scale:2}, 16));
-    $('#phoneWeather').appendChild(document.createTextNode(' ' + wx.name + ' · ' + PQ.seasonNow()));
+    const need = PQ.xpForLevel(state.level);
+    const pct = Math.max(0, Math.min(100, (state.xp / need) * 100));
+    $('#phoneXpFill').style.width = pct + '%';
+    $('#phoneXpLabel').textContent = state.xp + ' / ' + need + ' XP';
 
-    // Tab content
+    // Météo
+    const wx = PQ.WEATHERS.find(w => w.id === state.weatherId) || PQ.WEATHERS[0];
+    paintSpriteToCanvas($('#phoneWeatherIcon'), 'wx_' + wx.id);
+    $('#phoneWeatherName').textContent = wx.name;
+    // Backup texte météo dans la barre de stats si l'icône est masquée
+    const stepsSpan = $('#phoneDailySteps');
+    if (stepsSpan && stepsSpan.parentElement) {
+      stepsSpan.parentElement.title = 'Météo : ' + wx.name + ' · Saison : ' + PQ.seasonNow();
+    }
+
+    // Threshold
+    const tBar = $('#phoneThreshold');
+    const thresh = PQ.CONFIG.DAILY_BONUS_THRESHOLD;
+    const tpct = Math.min(100, (state.dailySteps / thresh) * 100);
+    $('#phoneTFill').style.width = tpct + '%';
+    if (state.dailySteps >= thresh) {
+      tBar.classList.add('active');
+      $('#phoneTLabel').textContent = '✓ Bonus x2 !';
+    } else {
+      tBar.classList.remove('active');
+      $('#phoneTLabel').textContent = state.dailySteps + ' / ' + thresh;
+    }
+
+    renderPhonePane();
+  }
+
+  function renderPhonePane() {
     if (activeTab === 'map')          renderMap();
     if (activeTab === 'quests')       renderQuests();
     if (activeTab === 'shop')         renderShop();
@@ -2031,48 +2731,43 @@ input[type=number], input[type=date], input[type=text] {
     const grid = $('#phoneMap');
     grid.innerHTML = '';
     const tiles = makeWorld();
-    for (let y=0; y<9; y++) {
-      for (let x=0; x<9; x++) {
+    for (let y = 0; y < 9; y++) {
+      for (let x = 0; x < 9; x++) {
         const cell = el('div', 'map-cell');
-        const c = PS.makeSprite('tile_'+tiles[y][x], { scale: 2 }, 16);
-        c.style.width = '100%'; c.style.height = '100%';
-        cell.appendChild(c);
-        if (x === state.pos.x && y === state.pos.y) {
-          const m = el('div','marker','🧙');
-          cell.appendChild(m);
+        cell.style.background = tileColor(tiles[y][x]);
+        if (state.pos.x === x && state.pos.y === y) {
+          cell.classList.add('player');
+          cell.textContent = '🧙';
         } else {
           const npc = npcAt(x, y);
           if (npc) {
-            const m = el('div','marker', npcEmoji(npc.id));
-            cell.appendChild(m);
+            cell.textContent = npcEmoji(npc.id);
+            cell.classList.add('npc-' + (npc.id === 'taverniere' ? 'tav' : npc.id === 'forgeron' ? 'smith' : npc.id === 'sage' ? 'sage' : 'breeder'));
           }
         }
         grid.appendChild(cell);
       }
     }
-    // Dialogue : si on est sur un NPC, parle
     const npcHere = npcAt(state.pos.x, state.pos.y);
     const d = $('#phoneDialogue');
     if (npcHere) {
       const lines = npcHere.dialogues;
       const line = lines[Math.abs(PQ.hashStr(state.totalSteps + npcHere.id)) % lines.length];
       d.innerHTML = '<span class="who">' + escapeHtml(npcHere.name) + ' :</span>' + escapeHtml(line);
-      lastDialogue = npcHere.id + ':' + line;
     } else {
-      d.innerHTML = '<span class="who">Narrateur :</span>Tu marches sur le sentier. (Pas d\'approche : ouvre l\'onglet Quêtes.)';
+      d.innerHTML = '<span class="who">Narrateur :</span>Tu marches sur le sentier. Marche jusqu\'à un PNJ pour parler.';
     }
   }
 
   function makeWorld() {
-    // Monde 9x9 déterministe (les types de tuiles).
     const rows = [];
     const seed = 'world-v1';
-    for (let y=0;y<9;y++){
+    for (let y = 0; y < 9; y++) {
       const row = [];
-      for (let x=0;x<9;x++){
-        const h = Math.abs(PQ.hashStr(seed+':'+x+':'+y));
-        let kind = 'grass';
+      for (let x = 0; x < 9; x++) {
+        const h = Math.abs(PQ.hashStr(seed + ':' + x + ':' + y));
         const m = h % 100;
+        let kind = 'grass';
         if (m < 8) kind = 'water';
         else if (m < 22) kind = 'forest';
         else if (m < 30) kind = 'sand';
@@ -2084,143 +2779,168 @@ input[type=number], input[type=date], input[type=text] {
     }
     return rows;
   }
-  function npcAt(x,y) {
+  function tileColor(kind) {
+    return ({
+      grass: '#3a6f2a', forest: '#1f4a17', water: '#3498db',
+      sand: '#e6c98a', stone: '#7f8c8d', snow: '#ecf0f1',
+    })[kind] || '#3a6f2a';
+  }
+  function npcAt(x, y) {
     const positions = {
-      'taverniere': [4,4],
-      'forgeron':   [2,6],
-      'sage':       [6,2],
-      'eleveur':    [7,7],
+      taverniere: [4, 4],
+      forgeron: [2, 6],
+      sage: [6, 2],
+      eleveur: [7, 7],
     };
     for (const id in positions) {
-      const [px,py] = positions[id];
-      if (px===x && py===y) return PQ.NPCS.find(n=>n.id===id);
+      const [px, py] = positions[id];
+      if (px === x && py === y) return PQ.NPCS.find(n => n.id === id);
     }
     return null;
   }
   function npcEmoji(id) {
-    return ({ taverniere:'🍺', forgeron:'🔨', sage:'📜', eleveur:'🥚' })[id] || '👤';
+    return ({ taverniere: '🍺', forgeron: '🔨', sage: '📜', eleveur: '🥚' })[id] || '👤';
   }
 
   function renderQuests() {
     const active = $('#phoneActiveQuests');
-    const avail  = $('#phoneAvailableQuests');
-    active.innerHTML = ''; avail.innerHTML = '';
-    if (state.activeQuests.length === 0) active.innerHTML = '<i style="color:#b9aee0">Aucune quête active.</i>';
+    const avail = $('#phoneAvailableQuests');
+    active.innerHTML = '';
+    avail.innerHTML = '';
+    if (state.activeQuests.length === 0) {
+      active.innerHTML = '<p style="color:var(--muted);font-style:italic">Aucune quête active. Choisis-en une ci-dessous.</p>';
+    }
     state.activeQuests.forEach(q => {
-      const tpl = PQ.QUEST_TEMPLATES.find(t=>t.id===q.id); if (!tpl) return;
-      const giver = PQ.NPCS.find(n=>n.id===tpl.giver);
-      const div = el('div','quest');
-      const pct = Math.min(100, Math.floor((q.progress/tpl.goal)*100));
-      div.innerHTML =
-        '<div class="qhead"><span class="qname">'+escapeHtml(tpl.name)+'</span>'+
-        '<span class="qprog">'+q.progress+' / '+tpl.goal+'</span></div>'+
-        '<div style="font-size:13px;color:#b9aee0">de '+escapeHtml(giver?giver.name:'?')+
-        ' · récompense '+tpl.reward.xp+' XP, '+tpl.reward.coin+'🪙</div>'+
-        '<div class="qbar"><div class="qfill" style="width:'+pct+'%"></div></div>'+
-        '<div class="qact"></div>';
-      const acts = div.querySelector('.qact');
+      const tpl = PQ.QUEST_TEMPLATES.find(t => t.id === q.id); if (!tpl) return;
+      const giver = PQ.NPCS.find(n => n.id === tpl.giver);
+      const card = el('div', 'card');
+      const pct = Math.min(100, Math.floor((q.progress / tpl.goal) * 100));
+      card.innerHTML =
+        '<h4>' + escapeHtml(tpl.name) + '</h4>' +
+        '<div class="desc">de ' + escapeHtml(giver ? giver.name : '?') + '</div>' +
+        '<div class="meta">' + q.progress + ' / ' + tpl.goal + '</div>' +
+        '<div class="qbar"><div class="qfill" style="width:' + pct + '%"></div></div>' +
+        '<div class="meta qprice">+' + tpl.reward.xp + ' XP, +' + tpl.reward.coin + ' 🪙</div>' +
+        '<div class="card-actions"></div>';
+      const acts = card.querySelector('.card-actions');
       if (q.progress >= tpl.goal) {
-        const b = document.createElement('button'); b.textContent = 'Rendre'; b.onclick = () => {
+        const b = el('button', 'btn primary small'); b.textContent = '✓ Rendre la quête';
+        b.onclick = () => {
           const r = PQ.turnInQuest(state, q.id);
-          if (r.ok) flashLog('ok', 'Quête « '+tpl.name+' » rendue. +'+r.reward.xp+' XP, +'+r.reward.coin+'🪙');
+          if (r.ok) toast('Quête rendue : +' + r.reward.xp + ' XP, +' + r.reward.coin + ' 🪙', 'success');
           syncAndRender();
         };
         acts.appendChild(b);
       }
-      active.appendChild(div);
+      active.appendChild(card);
     });
     PQ.QUEST_TEMPLATES.forEach(tpl => {
-      const isActive = state.activeQuests.find(q=>q.id===tpl.id);
-      const isDone   = state.completedQuests.includes(tpl.id);
+      const isActive = state.activeQuests.find(q => q.id === tpl.id);
+      const isDone = state.completedQuests.includes(tpl.id);
       if (isActive || isDone) return;
-      const giver = PQ.NPCS.find(n=>n.id===tpl.giver);
-      const div = el('div','quest');
-      div.innerHTML =
-        '<div class="qhead"><span class="qname">'+escapeHtml(tpl.name)+'</span>'+
-        '<span class="qprog">objectif '+tpl.goal+(tpl.type?' '+(tpl.type==='kill'?tpl.target:tpl.type):'')+'</span></div>'+
-        '<div style="font-size:13px;color:#b9aee0">de '+escapeHtml(giver?giver.name:'?')+
-        ' · récompense '+tpl.reward.xp+' XP, '+tpl.reward.coin+'🪙</div>'+
-        '<div class="qact"></div>';
-      const b = document.createElement('button'); b.textContent = 'Accepter'; b.onclick = () => {
+      const giver = PQ.NPCS.find(n => n.id === tpl.giver);
+      const card = el('div', 'card');
+      card.innerHTML =
+        '<h4>' + escapeHtml(tpl.name) + '</h4>' +
+        '<div class="desc">de ' + escapeHtml(giver ? giver.name : '?') + '</div>' +
+        '<div class="meta">objectif ' + tpl.goal + (tpl.type === 'kill' ? ' ' + tpl.target : tpl.type === 'hatch' ? ' éclosion' : ' pas') + '</div>' +
+        '<div class="meta qprice">+' + tpl.reward.xp + ' XP, +' + tpl.reward.coin + ' 🪙</div>' +
+        '<div class="card-actions"></div>';
+      const b = el('button', 'btn small'); b.textContent = '+ Accepter';
+      b.onclick = () => {
         if (PQ.acceptQuest(state, tpl.id)) {
-          flashLog('ok', 'Quête « '+tpl.name+' » acceptée.');
+          toast('Quête acceptée : ' + tpl.name, 'success');
         }
         syncAndRender();
       };
-      div.querySelector('.qact').appendChild(b);
-      avail.appendChild(div);
+      card.querySelector('.card-actions').appendChild(b);
+      avail.appendChild(card);
     });
   }
 
   function renderShop() {
-    const g = $('#phoneShop'); g.innerHTML = '';
+    const g = $('#phoneShop');
+    g.innerHTML = '';
     PQ.SHOP_ITEMS.forEach(it => {
-      const card = el('div','item');
-      card.innerHTML =
-        '<div class="iname">'+escapeHtml(it.name)+'</div>'+
-        '<div class="idesc">'+escapeHtml(it.desc)+'</div>'+
-        '<div class="iprice">'+it.price+'🪙</div>';
-      const b = document.createElement('button'); b.textContent='Acheter'; b.onclick=()=>{
+      const card = el('div', 'item');
+      const info = el('div', 'item-info');
+      info.innerHTML =
+        '<div class="item-name">' + escapeHtml(it.name) + '</div>' +
+        '<div class="item-desc">' + escapeHtml(it.desc) + '</div>' +
+        '<div class="item-price">' + it.price + ' 🪙</div>';
+      card.appendChild(info);
+      const actions = el('div', 'item-actions');
+      const b = el('button', 'btn small'); b.textContent = 'Acheter';
+      b.onclick = () => {
         const r = PQ.buy(state, it.id);
-        if (r.ok) flashLog('ok','Acheté : '+it.name);
-        else flashLog('ko','Achat impossible : '+r.reason);
+        if (r.ok) toast('Acheté : ' + it.name, 'success');
+        else toast(r.reason, 'error');
         syncAndRender();
       };
-      card.appendChild(b);
+      actions.appendChild(b);
+      card.appendChild(actions);
       g.appendChild(card);
     });
 
-    const inv = $('#phoneInv'); inv.innerHTML = '';
+    const inv = $('#phoneInv');
+    inv.innerHTML = '';
     $('#phoneInvCount').textContent = PQ.inventoryWeight(state);
+    if (state.inventory.length === 0) {
+      inv.innerHTML = '<p style="color:var(--muted);font-style:italic">Inventaire vide.</p>';
+    }
     state.inventory.forEach(it => {
-      const def = PQ.SHOP_ITEMS.find(s=>s.id===it.id) || { name: it.id, desc:'objet', price: 5, type:'misc' };
-      const card = el('div','item');
-      card.innerHTML =
-        '<div class="iname">'+escapeHtml(def.name)+' x'+it.qty+'</div>'+
-        '<div class="idesc">'+escapeHtml(def.desc||'objet')+'</div>'+
-        '<div class="iprice">vente '+Math.floor(def.price*0.4)+'🪙</div>';
-      const b = document.createElement('button'); b.textContent='Vendre'; b.onclick=()=>{
+      const def = PQ.SHOP_ITEMS.find(s => s.id === it.id) || { name: it.id, desc: 'objet', price: 5, type: 'misc' };
+      const card = el('div', 'item');
+      const info = el('div', 'item-info');
+      info.innerHTML =
+        '<div class="item-name">' + escapeHtml(def.name) + ' x' + it.qty + '</div>' +
+        '<div class="item-desc">' + escapeHtml(def.desc || 'objet') + '</div>' +
+        '<div class="item-price">vente ' + Math.floor(def.price * 0.4) + ' 🪙</div>';
+      card.appendChild(info);
+      const actions = el('div', 'item-actions');
+      const sb = el('button', 'btn small'); sb.textContent = 'Vendre';
+      sb.onclick = () => {
         const r = PQ.sell(state, it.id);
-        if (r.ok) flashLog('ok','Vendu : '+def.name+' (+'+r.refund+'🪙)');
+        if (r.ok) toast('Vendu : +' + r.refund + ' 🪙', 'success');
         syncAndRender();
       };
-      card.appendChild(b);
-      // Equip pour armes/armures
+      actions.appendChild(sb);
       if (def.type === 'weapon' || def.type === 'armor') {
-        const e = document.createElement('button'); e.textContent='Équiper';
-        e.onclick = () => {
-          const slot = def.type;
-          state.equipped[slot] = it.id;
-          flashLog('ok','Équipé : '+def.name);
+        const eb = el('button', 'btn small primary'); eb.textContent = 'Équiper';
+        eb.onclick = () => {
+          state.equipped[def.type] = it.id;
+          toast('Équipé : ' + def.name, 'success');
           syncAndRender();
         };
-        card.appendChild(e);
+        actions.appendChild(eb);
       }
+      card.appendChild(actions);
       inv.appendChild(card);
     });
-    $('#phoneEncumbered').textContent = PQ.isEncumbered(state)
-      ? '⚠ Encombrement : 110 pas pour 100 XP. Vendez ou déposez à la Taverne.'
-      : '';
+
+    $('#phoneEncumbered').style.display = PQ.isEncumbered(state) ? '' : 'none';
   }
 
   function renderBestiary() {
-    const g = $('#phoneBestiary'); g.innerHTML = '';
+    const g = $('#phoneBestiary');
+    g.innerHTML = '';
     PQ.MONSTERS.forEach(m => {
-      const seen = (state.bestiary[m.id]||0) > 0;
-      const card = el('div','bestiary-card' + (seen?'':' locked'));
-      const c = PS.makeSprite(m.sprite, { scale: 2 });
-      c.style.width = '48px'; c.style.height = '48px';
-      card.appendChild(c);
-      const info = el('div','info');
+      const seen = (state.bestiary[m.id] || 0) > 0;
+      const card = el('div', 'beast-card' + (seen ? '' : ' locked'));
+      const sprite = spriteCanvas(m.sprite, 64);
+      sprite.classList.add('beast-sprite');
+      card.appendChild(sprite);
+      const info = el('div', 'beast-info');
       info.innerHTML =
-        '<div class="name">'+escapeHtml(seen?m.name:'???')+'</div>'+
-        '<div class="meta">PV '+m.hp+' · XP '+m.xp+' · Tier '+m.tier+'</div>'+
-        '<div class="meta">Vaincus : '+(state.bestiary[m.id]||0)+'</div>';
+        '<div class="item-name">' + escapeHtml(seen ? m.name : '???') + '</div>' +
+        '<div class="item-desc">PV ' + m.hp + ' · XP ' + m.xp + ' · Tier ' + m.tier + '</div>' +
+        '<div class="meta">Vaincus : ' + (state.bestiary[m.id] || 0) + '</div>';
       card.appendChild(info);
-      const b = document.createElement('button'); b.textContent='Combattre'; b.onclick=()=>{
+      const b = el('button', 'btn small'); b.textContent = '⚔';
+      b.onclick = () => {
         const r = PQ.fight(state, m.id);
-        if (r.ok) flashLog('ok','Vaincu : '+m.name);
-        else     flashLog('ko','Trop fort. Reviens plus tard.');
+        if (r.ok) toast('Vaincu : ' + m.name, 'success');
+        else toast('Trop fort. Reviens plus tard.', 'error');
         syncAndRender();
       };
       card.appendChild(b);
@@ -2230,30 +2950,38 @@ input[type=number], input[type=date], input[type=text] {
 
   function renderPets() {
     const eggDiv = $('#phoneEgg');
+    eggDiv.innerHTML = '';
     if (state.eggIncubating) {
-      const def = PQ.PETS.find(p=>p.id===state.eggIncubating.petId);
-      const c = PS.makeSprite('item_egg', {scale:2});
-      eggDiv.innerHTML = '';
-      eggDiv.appendChild(c);
-      const info = el('div','');
-      const pct = Math.min(100, Math.floor((state.eggIncubating.steps/def.hatchSteps)*100));
-      info.innerHTML = '<div class="iname">Œuf en couvée</div>'+
-        '<div class="idesc">Marche pour faire éclore… ('+state.eggIncubating.steps+' / '+def.hatchSteps+' pas — '+pct+'%)</div>';
-      eggDiv.appendChild(info);
+      const def = PQ.PETS.find(p => p.id === state.eggIncubating.petId);
+      const card = el('div', 'egg-card');
+      const sprite = spriteCanvas('item_egg', 48);
+      card.appendChild(sprite);
+      const info = el('div', 'item-info');
+      const pct = Math.min(100, Math.floor((state.eggIncubating.steps / def.hatchSteps) * 100));
+      info.innerHTML =
+        '<div class="item-name">Œuf en couvée</div>' +
+        '<div class="item-desc">Marche pour faire éclore (' + state.eggIncubating.steps + ' / ' + def.hatchSteps + ')</div>' +
+        '<div class="qbar"><div class="qfill" style="width:' + pct + '%"></div></div>';
+      card.appendChild(info);
+      eggDiv.appendChild(card);
     } else {
-      eggDiv.innerHTML = '<i style="color:#b9aee0">Aucun œuf en couvée. Achète un Œuf Mystère à la boutique.</i>';
+      eggDiv.innerHTML = '<p style="color:var(--muted);font-style:italic">Aucun œuf en couvée. Achète un Œuf Mystère à la boutique.</p>';
     }
-    const g = $('#phonePets'); g.innerHTML = '';
+
+    const g = $('#phonePets');
+    g.innerHTML = '';
     PQ.PETS.forEach(p => {
-      const owned = state.pets.find(x=>x.id===p.id && x.hatched);
-      const card = el('div','pet-card' + (owned?'':' locked'));
-      if (!owned) card.style.filter = 'grayscale(1) brightness(0.5)';
-      const c = PS.makeSprite(p.sprite, { scale: 2 });
-      c.style.width = '64px'; c.style.height = '64px';
-      card.appendChild(c);
-      card.appendChild(el('div','iname',escapeHtml(p.name)));
-      card.appendChild(el('div','idesc','éclot à '+p.hatchSteps+' pas'));
-      card.appendChild(el('div','idesc',escapeHtml(p.trait)));
+      const owned = state.pets.some(x => x.id === p.id && x.hatched);
+      const card = el('div', 'pet-card' + (owned ? '' : ' locked'));
+      const sprite = spriteCanvas(p.sprite, 64);
+      sprite.classList.add('beast-sprite');
+      card.appendChild(sprite);
+      const info = el('div', 'item-info');
+      info.innerHTML =
+        '<div class="item-name">' + escapeHtml(p.name) + (owned ? ' ★' : '') + '</div>' +
+        '<div class="item-desc">éclot à ' + p.hatchSteps + ' pas</div>' +
+        '<div class="meta">' + escapeHtml(p.trait) + '</div>';
+      card.appendChild(info);
       g.appendChild(card);
     });
   }
@@ -2261,307 +2989,391 @@ input[type=number], input[type=date], input[type=text] {
   function renderRaid() {
     const div = $('#phoneRaid');
     div.innerHTML = '';
-    const boss = PQ.RAID_BOSSES.find(b=>b.id===state.raid.bossId) || PQ.RAID_BOSSES[0];
-    const c = PS.makeSprite('boss_dragon', { scale: 4 }, 32);
-    c.style.width = '128px'; c.style.height = '128px';
-    div.appendChild(c);
-    div.appendChild(el('div','raid-name','BOSS · '+escapeHtml(boss.name)));
+    const boss = PQ.RAID_BOSSES.find(b => b.id === state.raid.bossId) || PQ.RAID_BOSSES[0];
+    const card = el('div', 'raid-card');
+    const sprite = spriteCanvas('boss_dragon', 128);
+    sprite.classList.add('raid-sprite');
+    card.appendChild(sprite);
+    card.appendChild(el('div', 'raid-name', 'BOSS · ' + escapeHtml(boss.name)));
     const total = boss.hp;
     const cur = state.raid.hp;
-    const pct = Math.max(0, Math.min(100, (cur/total)*100));
-    const bar = el('div','raid-bar');
-    bar.innerHTML = '<div class="rfill" style="width:'+pct+'%"></div><span>'+cur+' / '+total+' PV</span>';
-    div.appendChild(bar);
-    div.appendChild(el('div','raid-info',
-      'Chaque pas = 1 dégât. Tu as jusqu\'à dimanche soir. ' +
-      (cur===0 ? '🏆 BOSS VAINCU ! Récompense : '+boss.reward : 'Total infligé : '+state.raid.participated)
-    ));
+    const pct = Math.max(0, Math.min(100, (cur / total) * 100));
+    const bar = el('div', 'raid-bar');
+    bar.innerHTML = '<div class="rfill" style="width:' + pct + '%"></div><span>' + cur + ' / ' + total + ' PV</span>';
+    card.appendChild(bar);
+    card.appendChild(el('p', 'meta', 'Chaque pas = 1 dégât. Tu as jusqu\'à dimanche soir.'));
+    card.appendChild(el('p', 'meta', 'Total infligé : ' + state.raid.participated));
+    if (cur === 0) {
+      card.appendChild(el('p', 'qprice', '🏆 BOSS VAINCU ! Récompense : ' + boss.reward));
+    }
+    div.appendChild(card);
   }
 
   function renderChar() {
     const root = $('#phoneCharBuilder');
     root.innerHTML = '';
-    // preview
-    const prev = el('div','preview-hero');
-    const c = document.createElement('canvas'); c.width = 16; c.height = 16;
-    c.style.width = '128px'; c.style.height = '128px'; c.style.imageRendering = 'pixelated';
+
+    // Preview
+    const prev = el('div', 'char-preview');
+    const c = document.createElement('canvas');
+    c.width = 16; c.height = 16;
+    paintSpriteToCanvas(c, 'hero', {
+      skin: state.character.skin,
+      hairColor: state.character.hairColor,
+      classId: state.character.classId,
+    });
     prev.appendChild(c);
-    paintHeroInto(c);
     root.appendChild(prev);
 
-    // name
-    const nameRow = el('div','char-row');
+    // Name
+    const nameRow = el('div', 'char-row');
     nameRow.innerHTML = '<label>Nom</label>';
-    const inp = document.createElement('input'); inp.type='text'; inp.value = state.character.name;
-    inp.maxLength = 16;
-    inp.oninput = () => { state.character.name = inp.value || 'Aventurier'; saveState(state); syncAndRender(); };
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.value = state.character.name; inp.maxLength = 16;
+    inp.oninput = () => {
+      state.character.name = inp.value || 'Aventurier';
+      saveState(state);
+      // Pas de full re-render pour ne pas perdre le focus, juste HUD
+      $('#phoneName').textContent = state.character.name + ' · ' + (PQ.CLASSES.find(c => c.id === state.character.classId) || {name: '?'}).name;
+    };
     nameRow.appendChild(inp);
     root.appendChild(nameRow);
 
-    // class
-    const cl = el('div','char-row'); cl.innerHTML = '<label>Classe</label>';
-    const grid = el('div','class-grid');
+    // Class
+    const cl = el('div', 'char-row');
+    cl.innerHTML = '<label>Classe</label>';
+    const grid = el('div', 'class-grid');
     PQ.CLASSES.forEach(k => {
-      const card = el('div','class-card' + (state.character.classId===k.id?' active':''));
-      card.innerHTML = '<div class="iname">'+escapeHtml(k.name)+'</div><div class="idesc" style="font-size:11px">'+escapeHtml(k.desc)+'</div>';
-      card.onclick = () => { state.character.classId = k.id; saveState(state); syncAndRender(); };
+      const card = el('div', 'class-card' + (state.character.classId === k.id ? ' active' : ''));
+      card.innerHTML = '<div class="cname">' + escapeHtml(k.name) + '</div><div class="cdesc">' + escapeHtml(k.desc) + '</div>';
+      card.onclick = () => {
+        state.character.classId = k.id;
+        saveState(state);
+        syncAndRender();
+      };
       grid.appendChild(card);
     });
     cl.appendChild(grid);
     root.appendChild(cl);
 
-    // hair color
-    const hc = el('div','char-row'); hc.innerHTML = '<label>Cheveux</label>';
-    const hg = el('div','color-grid');
+    // Hair color
+    const hc = el('div', 'char-row');
+    hc.innerHTML = '<label>Couleur cheveux</label>';
+    const hg = el('div', 'swatch-grid');
     PQ.HAIR_COLORS.forEach(col => {
-      const sw = el('div','swatch'+(state.character.hairColor===col?' active':''));
+      const sw = el('div', 'swatch' + (state.character.hairColor === col ? ' active' : ''));
       sw.style.background = col;
-      sw.onclick = () => { state.character.hairColor = col; saveState(state); syncAndRender(); };
+      sw.onclick = () => {
+        state.character.hairColor = col;
+        saveState(state);
+        syncAndRender();
+      };
       hg.appendChild(sw);
     });
     hc.appendChild(hg);
     root.appendChild(hc);
 
-    // skin
-    const sk = el('div','char-row'); sk.innerHTML = '<label>Peau</label>';
-    const sg = el('div','color-grid');
+    // Skin
+    const sk = el('div', 'char-row');
+    sk.innerHTML = '<label>Couleur peau</label>';
+    const sg = el('div', 'swatch-grid');
     PQ.SKIN_TONES.forEach(col => {
-      const sw = el('div','swatch'+(state.character.skin===col?' active':''));
+      const sw = el('div', 'swatch' + (state.character.skin === col ? ' active' : ''));
       sw.style.background = col;
-      sw.onclick = () => { state.character.skin = col; saveState(state); syncAndRender(); };
+      sw.onclick = () => {
+        state.character.skin = col;
+        saveState(state);
+        syncAndRender();
+      };
       sg.appendChild(sw);
     });
     sk.appendChild(sg);
     root.appendChild(sk);
 
-    // hairstyle (textuel pour l'instant)
-    const hs = el('div','char-row'); hs.innerHTML = '<label>Coiffure</label>';
+    // Hairstyle
+    const hs = el('div', 'char-row');
+    hs.innerHTML = '<label>Coiffure</label>';
+    const hsg = el('div', 'style-grid');
     PQ.HAIRSTYLES.forEach(h => {
-      const b = document.createElement('button');
+      const b = el('button', 'style-btn' + (state.character.hair === h ? ' active' : ''));
       b.textContent = h;
-      if (state.character.hair===h) b.style.background = '#d36cb0';
-      b.onclick = () => { state.character.hair = h; saveState(state); syncAndRender(); };
-      hs.appendChild(b);
+      b.onclick = () => {
+        state.character.hair = h;
+        saveState(state);
+        syncAndRender();
+      };
+      hsg.appendChild(b);
     });
+    hs.appendChild(hsg);
     root.appendChild(hs);
   }
 
   function renderAchievements() {
-    const g = $('#phoneAchievements'); g.innerHTML = '';
+    const g = $('#phoneAchievements');
+    g.innerHTML = '';
     PQ.ACHIEVEMENTS.forEach(a => {
       const got = state.achievements.includes(a.id);
-      const div = el('div','ach ' + (got?'unlocked':'locked'));
-      div.innerHTML = '<div class="aname">'+(got?'★ ':'')+escapeHtml(a.name)+'</div>';
+      const div = el('div', 'ach ' + (got ? 'unlocked' : 'locked'));
+      div.innerHTML = '<span class="star">' + (got ? '★' : '☆') + '</span><span class="aname">' + escapeHtml(a.name) + '</span>';
       g.appendChild(div);
     });
   }
 
-  // ------ Render WATCH ------------------------------------------------------
+  // ----- Render WATCH --------------------------------------------------------
   function renderWatch() {
     const root = $('#watchContent');
     root.innerHTML = '';
     if (activeWatchTab === 'main') {
-      // Heros + Niveau + XP + steps
-      const c = document.createElement('canvas'); c.width=16; c.height=16;
-      c.style.width='48px'; c.style.height='48px'; c.style.imageRendering='pixelated';
-      paintHeroInto(c);
+      const c = document.createElement('canvas');
+      c.width = 16; c.height = 16;
+      c.style.width = '48px'; c.style.height = '48px'; c.style.imageRendering = 'pixelated';
+      paintSpriteToCanvas(c, 'hero', {
+        skin: state.character.skin,
+        hairColor: state.character.hairColor,
+        classId: state.character.classId,
+      });
       root.appendChild(c);
-      root.appendChild(rowNum('Niv.', state.level));
+      root.appendChild(rowLbl('Niv. ' + state.level, true));
       const need = PQ.xpForLevel(state.level);
-      const bar = el('div','watch-bar');
-      bar.innerHTML = '<div class="fill" style="width:'+Math.min(100,(state.xp/need)*100)+'%"></div>';
+      const bar = el('div', 'watch-bar');
+      bar.innerHTML = '<div class="fill" style="width:' + Math.min(100, (state.xp / need) * 100) + '%"></div>';
       root.appendChild(bar);
-      root.appendChild(rowNum('Pas', state.dailySteps));
-      root.appendChild(rowNum('🪙', state.coins));
+      root.appendChild(rowLbl('👣 ' + state.dailySteps + ' pas'));
+      root.appendChild(rowLbl('🪙 ' + state.coins));
     } else if (activeWatchTab === 'quest') {
       const q = state.activeQuests[0];
-      if (!q) { root.appendChild(rowLbl('Aucune quête')); }
-      else {
-        const tpl = PQ.QUEST_TEMPLATES.find(t=>t.id===q.id);
-        root.appendChild(rowLbl(tpl?tpl.name:'?'));
-        root.appendChild(rowNum(q.progress, tpl?tpl.goal:'?'));
-        const bar = el('div','watch-bar');
-        bar.innerHTML = '<div class="fill" style="background:#2ecc71;width:'+
-          Math.min(100, Math.floor((q.progress/(tpl?tpl.goal:1))*100))+'%"></div>';
+      if (!q) {
+        root.appendChild(rowLbl('Aucune quête'));
+      } else {
+        const tpl = PQ.QUEST_TEMPLATES.find(t => t.id === q.id);
+        root.appendChild(rowLbl(tpl ? tpl.name : '?', true));
+        root.appendChild(rowLbl(q.progress + ' / ' + (tpl ? tpl.goal : '?')));
+        const bar = el('div', 'watch-bar');
+        bar.innerHTML = '<div class="fill" style="background:#2ecc71;width:' +
+          Math.min(100, Math.floor((q.progress / (tpl ? tpl.goal : 1)) * 100)) + '%"></div>';
         root.appendChild(bar);
       }
     } else if (activeWatchTab === 'raid') {
-      const boss = PQ.RAID_BOSSES.find(b=>b.id===state.raid.bossId);
-      const c = PS.makeSprite('boss_dragon',{scale:2},32);
-      c.style.width='64px'; c.style.height='64px';
+      const boss = PQ.RAID_BOSSES.find(b => b.id === state.raid.bossId);
+      const c = document.createElement('canvas');
+      c.width = 32; c.height = 32;
+      c.style.width = '64px'; c.style.height = '64px'; c.style.imageRendering = 'pixelated';
+      paintSpriteToCanvas(c, 'boss_dragon');
       root.appendChild(c);
-      root.appendChild(rowLbl(boss?boss.name:'?'));
-      const bar = el('div','watch-bar');
-      bar.innerHTML = '<div class="fill" style="background:linear-gradient(90deg,#7a1a1a,#ff5d6c);width:'+
-        Math.min(100, (state.raid.hp/(boss?boss.hp:1))*100)+'%"></div>';
+      root.appendChild(rowLbl(boss ? boss.name : '?', true));
+      const bar = el('div', 'watch-bar');
+      bar.innerHTML = '<div class="fill" style="background:linear-gradient(90deg,#7a1a1a,#ff5d6c);width:' +
+        Math.min(100, (state.raid.hp / (boss ? boss.hp : 1)) * 100) + '%"></div>';
       root.appendChild(bar);
-      root.appendChild(rowLbl(state.raid.hp+' PV'));
+      root.appendChild(rowLbl(state.raid.hp + ' PV'));
     } else if (activeWatchTab === 'pet') {
       if (state.eggIncubating) {
-        const c = PS.makeSprite('item_egg',{scale:2});
-        c.style.width='48px'; c.style.height='48px';
+        const c = document.createElement('canvas');
+        c.width = 16; c.height = 16;
+        c.style.width = '48px'; c.style.height = '48px'; c.style.imageRendering = 'pixelated';
+        paintSpriteToCanvas(c, 'item_egg');
         root.appendChild(c);
-        const def = PQ.PETS.find(p=>p.id===state.eggIncubating.petId);
-        const bar = el('div','watch-bar');
-        bar.innerHTML = '<div class="fill" style="background:#d36cb0;width:'+
-          Math.min(100, Math.floor((state.eggIncubating.steps/def.hatchSteps)*100))+'%"></div>';
+        const def = PQ.PETS.find(p => p.id === state.eggIncubating.petId);
+        const bar = el('div', 'watch-bar');
+        bar.innerHTML = '<div class="fill" style="background:#d36cb0;width:' +
+          Math.min(100, Math.floor((state.eggIncubating.steps / def.hatchSteps) * 100)) + '%"></div>';
         root.appendChild(bar);
-        root.appendChild(rowLbl(state.eggIncubating.steps+'/'+def.hatchSteps));
+        root.appendChild(rowLbl(state.eggIncubating.steps + '/' + def.hatchSteps));
       } else if (state.pets.length) {
         const p = state.pets[0];
-        const def = PQ.PETS.find(P=>P.id===p.id);
-        const c = PS.makeSprite(def.sprite,{scale:2});
-        c.style.width='48px'; c.style.height='48px';
-        root.appendChild(c);
-        root.appendChild(rowLbl(def.name));
+        const def = PQ.PETS.find(P => P.id === p.id);
+        if (def) {
+          const c = document.createElement('canvas');
+          c.width = 16; c.height = 16;
+          c.style.width = '48px'; c.style.height = '48px'; c.style.imageRendering = 'pixelated';
+          paintSpriteToCanvas(c, def.sprite);
+          root.appendChild(c);
+          root.appendChild(rowLbl(def.name));
+        }
       } else {
         root.appendChild(rowLbl('Aucun familier'));
       }
     }
   }
-  function rowNum(label, num) {
-    const r = el('div','w-row');
-    r.innerHTML = '<span class="w-lbl">'+escapeHtml(String(label))+'</span><span class="w-num">'+escapeHtml(String(num))+'</span>';
-    return r;
-  }
-  function rowLbl(t) {
-    const r = el('div','w-row');
-    r.innerHTML = '<span class="w-lbl">'+escapeHtml(String(t))+'</span>';
+
+  function rowLbl(text, isNum) {
+    const r = el('div', isNum ? 'w-num' : 'w-lbl');
+    r.textContent = text;
     return r;
   }
 
-  // ------ Sync + render ----------------------------------------------------
+  // ----- Sync + render orchestrator -----------------------------------------
   function syncAndRender() {
-    // Auto-fix systématique : protège l'UI
     const fixed = PT.autoFix(state);
     if (fixed.length) flashLog('fix', 'Auto-fix : ' + fixed.join(', '));
-
     saveState(state);
     PSync.emit('state', state);
-    renderPhone(); renderWatch();
+    renderPhone();
+    if (activeView === 'watch') renderWatch();
     renderCheatLog();
     renderSyncStatus();
   }
 
-  PSync.on('state', () => { /* autres consumers en hook */ });
-  PSync.on('synced', () => { renderSyncStatus(); });
+  PSync.on('synced', () => renderSyncStatus());
 
   function renderSyncStatus() {
     const st = PSync.status();
     const dot = $('#syncDot');
     const lbl = $('#syncLabel');
-    if (st.pending > 0) { dot.classList.remove('ok'); lbl.textContent = 'Sync en cours…'; }
-    else { dot.classList.add('ok'); lbl.textContent = 'Sync ✓ Phone ↔ Watch (' + new Date(st.lastSync).toLocaleTimeString() + ')'; }
+    if (st.pending > 0) {
+      dot.classList.remove('ok');
+      lbl.textContent = 'Sync…';
+    } else {
+      dot.classList.add('ok');
+      lbl.textContent = 'Sync ✓';
+    }
   }
   function renderCheatLog() {
     const recent = state.flags.slice(-6).reverse().map(f =>
-      new Date(f.t).toLocaleTimeString() + ' — ' + f.issues.join(', ') + ' (raw '+f.raw+', kept '+f.kept+')'
+      new Date(f.t).toLocaleTimeString() + ' — ' + f.issues.join(', ') + ' (raw ' + f.raw + ', kept ' + f.kept + ')'
     );
-    $('#cheatLog').textContent = recent.length ? recent.join('
-') : 'Aucune anomalie détectée.';
+    $('#cheatLog').textContent = recent.length ? recent.join('\n') : 'Aucune anomalie détectée.';
   }
 
   function flashLog(cls, msg) {
     const log = $('#debugLog');
-    const span = '<span class="'+cls+'">' + escapeHtml(new Date().toLocaleTimeString()) + ' ' + escapeHtml(msg) + '</span>
-';
+    const span = '<span class="' + cls + '">' + escapeHtml(new Date().toLocaleTimeString()) + ' ' + escapeHtml(msg) + '</span>\n';
     log.innerHTML += span;
     log.scrollTop = log.scrollHeight;
   }
 
-  // ------ Tabs handlers ----------------------------------------------------
-  $$('.tab').forEach(t => t.addEventListener('click', () => {
-    $$('.tab').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    activeTab = t.dataset.tab;
-    $$('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.pane===activeTab));
-    renderPhone();
-  }));
-  $$('.wtab').forEach(t => t.addEventListener('click', () => {
-    $$('.wtab').forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    activeWatchTab = t.dataset.wtab;
-    renderWatch();
-  }));
-
-  // ------ Top-bar handlers -------------------------------------------------
+  // ----- Topbar / FAB handlers -----------------------------------------------
   $('#btnAddSteps').addEventListener('click', () => {
-    const n = parseInt($('#simSteps').value, 10) || 50;
-    const r = PQ.ingestSteps(state, n, Date.now());
-    flashLog('info', '+'+r.gainedXp+' XP, +'+r.gainedCoins+'🪙'
-      + (r.levelUps.length ? ' · LEVEL UP → '+r.levelUps.join(',') : '')
-      + (r.issues.length ? ' · ⚠ '+r.issues.join('; ') : ''));
+    const r = PQ.ingestSteps(state, 50, Date.now());
+    let msg = '+' + r.gainedXp + ' XP, +' + r.gainedCoins + ' 🪙';
+    if (r.levelUps.length) msg += ' · LEVEL UP !';
+    if (r.issues.length) msg += ' ⚠';
+    toast(msg, r.levelUps.length ? 'success' : '');
     syncAndRender();
   });
-  $('#btnTick').addEventListener('click', () => {
-    if (tickerHandle) { clearInterval(tickerHandle); tickerHandle = null; flashLog('info','Tick auto arrêté.'); return; }
-    flashLog('info', 'Tick auto démarré : 50 pas / 5s');
-    tickerHandle = setInterval(() => {
-      const r = PQ.ingestSteps(state, 50, Date.now());
-      if (r.levelUps.length) flashLog('ok', 'LEVEL UP → niv. '+r.levelUps.join(','));
-      syncAndRender();
-    }, 5000);
+  // Long press on FAB to open custom drawer
+  let pressTimer = null;
+  $('#btnAddSteps').addEventListener('touchstart', () => {
+    pressTimer = setTimeout(() => {
+      $('#stepDrawer').classList.toggle('visible');
+    }, 500);
   });
+  $('#btnAddSteps').addEventListener('touchend', () => {
+    clearTimeout(pressTimer);
+  });
+  $('#btnAddSteps').addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    $('#stepDrawer').classList.toggle('visible');
+  });
+  $('#btnAddCustom').addEventListener('click', () => {
+    const n = parseInt($('#simSteps').value, 10) || 50;
+    const r = PQ.ingestSteps(state, n, Date.now());
+    toast('+' + r.gainedXp + ' XP, +' + r.gainedCoins + ' 🪙');
+    $('#stepDrawer').classList.remove('visible');
+    syncAndRender();
+  });
+
   $('#btnReset').addEventListener('click', () => {
     if (!confirm('Réinitialiser TOUTE la progression ?')) return;
     state = PQ.defaultState();
     state.character = {
       name: 'Aventurier', classId: 'guerrier',
-      hair: 'short', hairColor: '#8b4513', skin: '#f4c79a'
+      hair: 'short', hairColor: '#8b4513', skin: '#f4c79a',
     };
     saveState(state);
-    flashLog('info', 'État réinitialisé.');
+    toast('État réinitialisé');
     syncAndRender();
   });
-  $('#simDate').valueAsDate = new Date();
 
-  // ------ Debug actions ----------------------------------------------------
+  // ----- Debug actions -------------------------------------------------------
   $('#btnRunTests').addEventListener('click', () => {
     const log = $('#debugLog');
-    log.innerHTML = '<span class="info">▶ Tests fonctionnels</span>
-';
+    log.innerHTML = '<span class="info">▶ Tests fonctionnels</span>\n';
     const fr = PT.runFunctionalTests();
     let pass = 0, fail = 0;
     fr.forEach(r => {
       const cls = r.ok ? 'ok' : 'ko';
-      log.innerHTML += '<span class="'+cls+'">'+(r.ok?'✓':'✗')+' ['+r.id+'] '+escapeHtml(r.desc)+(r.msg?' — '+escapeHtml(r.msg):'')+'</span>
-';
+      log.innerHTML += '<span class="' + cls + '">' + (r.ok ? '✓' : '✗') + ' [' + r.id + '] ' +
+        escapeHtml(r.desc) + (r.msg ? ' — ' + escapeHtml(r.msg) : '') + '</span>\n';
       if (r.ok) pass++; else fail++;
     });
-    log.innerHTML += '<span class="info">
-▶ Invariants sur état actuel</span>
-';
+    log.innerHTML += '<span class="info">\n▶ Invariants</span>\n';
     const ir = PT.runInvariants(state);
     let ipass = 0, ifail = 0;
     ir.forEach(r => {
       const cls = r.ok ? 'ok' : 'ko';
-      log.innerHTML += '<span class="'+cls+'">'+(r.ok?'✓':'✗')+' ['+r.id+']'+(r.err?' err:'+escapeHtml(r.err):'')+'</span>
-';
+      log.innerHTML += '<span class="' + cls + '">' + (r.ok ? '✓' : '✗') + ' [' + r.id + ']</span>\n';
       if (r.ok) ipass++; else ifail++;
     });
-    log.innerHTML += '<span class="info">
-Résumé : '+pass+'/'+fr.length+' fn, '+ipass+'/'+ir.length+' inv.</span>
-';
-    if (fail+ifail>0) log.innerHTML += '<span class="fix">→ Cliquez « Auto-fix » pour réparer les invariants en échec.</span>
-';
+    log.innerHTML += '<span class="info">\nRésumé : ' + pass + '/' + fr.length + ' fn, ' + ipass + '/' + ir.length + ' inv.</span>\n';
     log.scrollTop = log.scrollHeight;
   });
   $('#btnAutoFix').addEventListener('click', () => {
     const fixed = PT.autoFix(state);
-    if (fixed.length === 0) flashLog('ok', 'Aucun fix nécessaire — état sain.');
-    else flashLog('fix', 'Auto-fix appliqué : ' + fixed.join(', '));
+    if (fixed.length === 0) {
+      flashLog('ok', 'Aucun fix nécessaire');
+      toast('État sain', 'success');
+    } else {
+      flashLog('fix', 'Auto-fix : ' + fixed.join(', '));
+      toast('Auto-fix appliqué');
+    }
     syncAndRender();
   });
   $('#btnExport').addEventListener('click', () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'pixelquest-state-'+Date.now()+'.json';
+    a.download = 'pixelquest-state-' + Date.now() + '.json';
     a.click();
+    toast('État exporté');
+  });
+  $('#btnTick').addEventListener('click', () => {
+    if (tickerHandle) {
+      clearInterval(tickerHandle);
+      tickerHandle = null;
+      flashLog('info', 'Tick arrêté');
+      toast('Tick arrêté');
+      $('#btnTick').textContent = '⏱ Tick auto 10s';
+      return;
+    }
+    flashLog('info', 'Tick : 50 pas / 10s');
+    toast('Tick démarré');
+    $('#btnTick').textContent = '⏸ Stop tick';
+    tickerHandle = setInterval(() => {
+      const r = PQ.ingestSteps(state, 50, Date.now());
+      if (r.levelUps.length) flashLog('ok', 'LEVEL UP → ' + r.levelUps.join(','));
+      syncAndRender();
+    }, 10000);
   });
 
-  // Easter egg : Konami (↑↑↓↓←→←→BA)
-  const konami = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+  // ----- PWA install ---------------------------------------------------------
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    $('#btnInstall').style.display = '';
+  });
+  $('#btnInstall').addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice.catch(() => null);
+    deferredPrompt = null;
+    $('#btnInstall').style.display = 'none';
+    toast('Installation lancée');
+  });
+
+  if (window.matchMedia('(max-width: 520px)').matches &&
+      !localStorage.getItem('pixelquest_hint_seen')) {
+    $('#installHint').style.display = '';
+  }
+  $('#closeHint').addEventListener('click', () => {
+    $('#installHint').style.display = 'none';
+    localStorage.setItem('pixelquest_hint_seen', '1');
+  });
+
+  // ----- Konami easter egg ---------------------------------------------------
+  const konami = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+                  'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
   let konamiIdx = 0;
   document.addEventListener('keydown', (e) => {
     const want = konami[konamiIdx];
@@ -2570,7 +3382,7 @@ Résumé : '+pass+'/'+fr.length+' fn, '+ipass+'/'+ir.length+' inv.</span>
       if (konamiIdx === konami.length) {
         konamiIdx = 0;
         state.coins += 1000;
-        flashLog('ok', '🎉 Easter egg Konami ! +1000🪙');
+        toast('🎉 Konami ! +1000 🪙', 'success');
         syncAndRender();
       }
     } else {
@@ -2578,36 +3390,8 @@ Résumé : '+pass+'/'+fr.length+' fn, '+ipass+'/'+ir.length+' inv.</span>
     }
   });
 
-  // ------ PWA install prompt -----------------------------------------------
-  let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const btn = $('#btnInstall');
-    if (btn) btn.style.display = '';
-  });
-  $('#btnInstall')?.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    await deferredPrompt.userChoice.catch(() => null);
-    deferredPrompt = null;
-    $('#btnInstall').style.display = 'none';
-  });
-
-  // Affiche l'astuce d'installation 1 fois sur petit écran
-  if (window.matchMedia('(max-width: 520px)').matches &&
-      !localStorage.getItem('pixelquest_hint_seen')) {
-    $('#installHint').style.display = '';
-  }
-  $('#closeHint')?.addEventListener('click', () => {
-    $('#installHint').style.display = 'none';
-    localStorage.setItem('pixelquest_hint_seen', '1');
-  });
-
-  // Init render
+  // ----- Init ----------------------------------------------------------------
   syncAndRender();
-  // Lance les tests une fois au démarrage pour confirmer que tout fonctionne
-  setTimeout(() => $('#btnRunTests').click(), 200);
 })();
 
 </script>

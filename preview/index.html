@@ -2,174 +2,200 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#1a1030" />
-  <title>PixelQuest – Prévisualisation</title>
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PixelQuest" />
+  <title>PixelQuest – RPG des Pas</title>
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="icon-192.png" type="image/png" />
   <link rel="apple-touch-icon" href="icon-192.png" />
 </head>
 <body>
+
   <header class="topbar">
     <div class="brand">
       <span class="logo">⚔︎</span> PixelQuest
-      <span class="tag">RPG · Pas · Aventure</span>
+      <span class="tag">RPG · Pas</span>
     </div>
-    <div class="controls">
-      <label>Pas simulés <input id="simSteps" type="number" min="1" max="500" value="50" /></label>
-      <button id="btnAddSteps">+ Pas</button>
-      <button id="btnTick">Auto</button>
-      <label>Date <input id="simDate" type="date" /></label>
-      <button id="btnReset" class="danger">Reset</button>
-      <button id="btnInstall" style="display:none">Installer</button>
-    </div>
-    <div class="status">
-      <span id="syncDot" class="dot ok"></span>
-      <span id="syncLabel">Sync ✓ Phone ↔ Watch</span>
+    <div class="topbar-actions">
+      <span class="sync-status">
+        <span id="syncDot" class="sync-dot ok"></span>
+        <span id="syncLabel">Sync ✓</span>
+      </span>
+      <button id="btnInstall" class="icon-btn" style="display:none" title="Installer">⤓</button>
+      <button id="btnReset" class="icon-btn" title="Réinitialiser">⟲</button>
     </div>
   </header>
 
   <div id="installHint" class="install-hint" style="display:none">
-    Astuce : pour avoir PixelQuest comme une vraie appli sur ton Android,
-    ouvre le menu de Chrome (⋮) → « <b>Installer l'application</b> » ou
-    « Ajouter à l'écran d'accueil ».
+    Menu Chrome ⋮ → <b>Installer l'app</b>
     <button id="closeHint">OK</button>
   </div>
 
+  <!-- Mobile : un seul écran à la fois. View switcher en haut. -->
+  <nav class="view-switcher">
+    <button data-view="phone" class="active">📱 Phone</button>
+    <button data-view="watch">⌚ Watch</button>
+    <button data-view="debug">🔧 Debug</button>
+  </nav>
+
   <main class="stage">
-    <!-- ============================== PHONE ============================== -->
-    <section class="device phone" aria-label="Aperçu téléphone">
-      <div class="device-label">Téléphone Android</div>
-      <div class="frame phone-frame">
-        <div class="screen phone-screen" id="phoneScreen">
-          <!-- HUD -->
-          <div class="hud">
-            <div class="hud-left">
-              <canvas class="hud-portrait" id="phoneHero" width="16" height="16"></canvas>
-              <div class="hud-info">
-                <div class="hud-name" id="phoneName">Aventurier</div>
-                <div class="hud-bar">
-                  <div class="bar xp"><div id="phoneXpFill" class="fill"></div><span id="phoneXpLabel">XP</span></div>
-                </div>
-                <div class="hud-line">
-                  <span class="lvl">Niv. <b id="phoneLvl">1</b></span>
-                  <span class="coin">🪙 <b id="phoneCoins">0</b></span>
-                  <span class="weather" id="phoneWeather"></span>
-                </div>
-              </div>
+
+    <!-- ============================== PHONE VIEW ============================== -->
+    <section class="view view-phone active" data-vid="phone">
+      <div class="phone-screen">
+
+        <!-- HUD -->
+        <div class="hud">
+          <canvas class="hud-portrait" id="phoneHero" width="16" height="16"></canvas>
+          <div class="hud-info">
+            <div class="hud-name" id="phoneName">Aventurier · Guerrier</div>
+            <div class="hud-bar">
+              <div id="phoneXpFill" class="fill" style="width:0%"></div>
+              <span id="phoneXpLabel">0 / 100 XP</span>
             </div>
-            <div class="hud-right">
-              <div class="steps-today">
-                <div class="lbl">Pas du jour</div>
-                <div class="val" id="phoneDailySteps">0</div>
-                <div class="threshold" id="phoneThreshold">Seuil 8000 : –</div>
-              </div>
+            <div class="hud-stats">
+              <span class="lvl">Niv. <b id="phoneLvl">1</b></span>
+              <span class="coin">🪙 <b id="phoneCoins">50</b></span>
+              <span class="steps">👣 <b id="phoneDailySteps">0</b></span>
             </div>
           </div>
-
-          <!-- Tabs -->
-          <nav class="tabs">
-            <button class="tab active" data-tab="map">Carte</button>
-            <button class="tab" data-tab="quests">Quêtes</button>
-            <button class="tab" data-tab="shop">Boutique</button>
-            <button class="tab" data-tab="bestiary">Bestiaire</button>
-            <button class="tab" data-tab="pets">Familiers</button>
-            <button class="tab" data-tab="raid">Raid</button>
-            <button class="tab" data-tab="char">Personnage</button>
-            <button class="tab" data-tab="achievements">Succès</button>
-          </nav>
-
-          <!-- Tab content -->
-          <div class="tab-pane active" data-pane="map">
-            <div class="map-container">
-              <div class="map-grid" id="phoneMap"></div>
-              <div class="map-legend">
-                <span><i class="t grass"></i> Plaines</span>
-                <span><i class="t forest"></i> Forêt</span>
-                <span><i class="t water"></i> Eau</span>
-                <span><i class="t sand"></i> Sable</span>
-                <span><i class="t stone"></i> Pierre</span>
-              </div>
-              <div class="dialogue" id="phoneDialogue"></div>
-            </div>
-          </div>
-
-          <div class="tab-pane" data-pane="quests">
-            <h3>Quêtes actives</h3>
-            <div id="phoneActiveQuests" class="quest-list"></div>
-            <h3>Disponibles</h3>
-            <div id="phoneAvailableQuests" class="quest-list"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="shop">
-            <h3>Boutique – Hilda la Taverniere</h3>
-            <div id="phoneShop" class="shop-grid"></div>
-            <h3>Inventaire (<span id="phoneInvCount">0</span>/40)</h3>
-            <div id="phoneInv" class="shop-grid"></div>
-            <p class="hint" id="phoneEncumbered"></p>
-          </div>
-
-          <div class="tab-pane" data-pane="bestiary">
-            <h3>Bestiaire</h3>
-            <div id="phoneBestiary" class="bestiary-grid"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="pets">
-            <h3>Familiers</h3>
-            <div id="phoneEgg" class="egg-status"></div>
-            <div id="phonePets" class="pets-grid"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="raid">
-            <h3>Raid hebdomadaire</h3>
-            <div class="raid-card" id="phoneRaid"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="char">
-            <h3>Création / Personnage</h3>
-            <div id="phoneCharBuilder"></div>
-          </div>
-
-          <div class="tab-pane" data-pane="achievements">
-            <h3>Succès</h3>
-            <div id="phoneAchievements" class="achievements-list"></div>
+          <div class="hud-weather">
+            <canvas id="phoneWeatherIcon" width="16" height="16"></canvas>
+            <span class="wname" id="phoneWeatherName">—</span>
           </div>
         </div>
+
+        <!-- Threshold bar 8000 -->
+        <div class="threshold-bar" id="phoneThreshold">
+          <span>x2 :</span>
+          <div class="tprog"><div class="tfill" id="phoneTFill" style="width:0%"></div></div>
+          <span id="phoneTLabel">0/8000</span>
+        </div>
+
+        <!-- Tab content -->
+        <div class="tab-pane active" data-pane="map">
+          <h3>Carte du Royaume Pas-Vert</h3>
+          <div class="map-container">
+            <div class="map-grid" id="phoneMap"></div>
+            <div class="map-legend">
+              <span><i class="grass"></i>Plaines</span>
+              <span><i class="forest"></i>Forêt</span>
+              <span><i class="water"></i>Eau</span>
+              <span><i class="sand"></i>Sable</span>
+              <span><i class="stone"></i>Pierre</span>
+            </div>
+            <div class="dialogue" id="phoneDialogue"></div>
+          </div>
+        </div>
+
+        <div class="tab-pane" data-pane="quests">
+          <h3>Quêtes actives</h3>
+          <div id="phoneActiveQuests"></div>
+          <h3>Disponibles</h3>
+          <div id="phoneAvailableQuests"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="shop">
+          <h3>Boutique – Hilda la Tavernière</h3>
+          <div id="phoneShop" class="item-grid"></div>
+          <h3>Inventaire (<span id="phoneInvCount">0</span>/40)</h3>
+          <div id="phoneInv" class="item-grid"></div>
+          <p id="phoneEncumbered" class="hint-warn" style="display:none">
+            ⚠ Encombrement : 110 pas pour 100 XP. Vendez à la Taverne.
+          </p>
+        </div>
+
+        <div class="tab-pane" data-pane="bestiary">
+          <h3>Bestiaire</h3>
+          <div id="phoneBestiary"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="pets">
+          <h3>Familiers</h3>
+          <div id="phoneEgg"></div>
+          <div id="phonePets"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="raid">
+          <h3>Raid hebdomadaire</h3>
+          <div id="phoneRaid"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="char">
+          <h3>Personnage</h3>
+          <div id="phoneCharBuilder"></div>
+        </div>
+
+        <div class="tab-pane" data-pane="achievements">
+          <h3>Succès</h3>
+          <div id="phoneAchievements" class="ach-grid"></div>
+        </div>
+
+        <!-- Bottom navigation : 8 onglets sur 2 lignes -->
+        <nav class="tabs">
+          <button class="tab active" data-tab="map"><span class="ticon">🗺️</span>Carte</button>
+          <button class="tab" data-tab="quests"><span class="ticon">⚑</span>Quêtes</button>
+          <button class="tab" data-tab="shop"><span class="ticon">🪙</span>Shop</button>
+          <button class="tab" data-tab="bestiary"><span class="ticon">🐉</span>Mobs</button>
+        </nav>
+        <nav class="tabs-secondary">
+          <button class="tab" data-tab="pets"><span class="ticon">🥚</span>Pets</button>
+          <button class="tab" data-tab="raid"><span class="ticon">⚔️</span>Raid</button>
+          <button class="tab" data-tab="char"><span class="ticon">🧙</span>Perso</button>
+          <button class="tab" data-tab="achievements"><span class="ticon">🏆</span>Succès</button>
+        </nav>
       </div>
     </section>
 
-    <!-- ============================== WATCH ============================== -->
-    <section class="device watch" aria-label="Aperçu Wear OS">
-      <div class="device-label">Wear OS</div>
-      <div class="frame watch-frame">
-        <div class="screen watch-screen" id="watchScreen">
-          <div class="watch-content" id="watchContent">
-            <!-- contenu rendu en JS -->
+    <!-- ============================== WATCH VIEW ============================== -->
+    <section class="view view-watch watch-view" data-vid="watch">
+      <div class="watch-frame">
+        <div class="watch-screen" id="watchScreen">
+          <div class="watch-content" id="watchContent"></div>
+          <div class="watch-tabs">
+            <button class="wtab active" data-wtab="main" title="Principal">●</button>
+            <button class="wtab" data-wtab="quest" title="Quête">⚑</button>
+            <button class="wtab" data-wtab="raid" title="Raid">⚔</button>
+            <button class="wtab" data-wtab="pet" title="Familier">★</button>
           </div>
-          <nav class="watch-tabs">
-            <button class="wtab active" data-wtab="main">●</button>
-            <button class="wtab" data-wtab="quest">⚑</button>
-            <button class="wtab" data-wtab="raid">⚔</button>
-            <button class="wtab" data-wtab="pet">★</button>
-          </nav>
         </div>
       </div>
+      <p class="watch-help">
+        La montre affiche un résumé synchronisé avec ton téléphone.
+        Sur Wear OS, ce sera la même chose, en vrai.
+      </p>
     </section>
 
-    <!-- ============================== DEBUG ============================== -->
-    <aside class="debug" aria-label="Panneau debug">
+    <!-- ============================== DEBUG VIEW ============================== -->
+    <section class="view view-debug debug-view" data-vid="debug">
       <h3>Debugger auto-correctif</h3>
       <div class="debug-actions">
-        <button id="btnRunTests">▶ Lancer tests</button>
-        <button id="btnAutoFix">⚙ Auto-fix</button>
-        <button id="btnExport">⤓ Exporter état</button>
+        <button class="btn small" id="btnRunTests">▶ Tests</button>
+        <button class="btn small" id="btnAutoFix">⚙ Auto-fix</button>
+        <button class="btn small" id="btnExport">⤓ Export</button>
+        <button class="btn small" id="btnTick">⏱ Tick auto 10s</button>
       </div>
+      <h3>Sortie</h3>
       <pre id="debugLog" class="debug-log">Prêt.</pre>
-      <h4>Anti-triche – flags récents</h4>
-      <pre id="cheatLog" class="debug-log small"></pre>
-    </aside>
+      <h3>Anti-triche – flags récents</h3>
+      <pre id="cheatLog" class="debug-log">Aucune anomalie.</pre>
+    </section>
+
   </main>
+
+  <!-- FAB : ajouter des pas (toujours visible) -->
+  <button class="fab" id="btnAddSteps" title="Ajouter des pas">+50<br>👣</button>
+  <div class="step-drawer" id="stepDrawer">
+    <label>Pas à ajouter :</label>
+    <input id="simSteps" type="number" min="1" max="500" value="50" />
+    <button class="btn small" id="btnAddCustom">+ Ajouter</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
 
   <script src="js/engine.js"></script>
   <script src="js/sprites.js"></script>

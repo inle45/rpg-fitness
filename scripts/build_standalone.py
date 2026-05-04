@@ -24,10 +24,16 @@ def main():
         js_blocks.append('// === %s ===\n' % f + read(f))
     js_combined = '\n\n'.join(js_blocks)
 
+    # IMPORTANT : on ne passe JAMAIS le contenu inliné comme replacement string
+    # à re.sub, car re.sub interprète les `\\n`, `\\1`, etc. À la place on
+    # utilise des lambdas (qui retournent la string telle quelle, sans
+    # interpréter les backreferences).
+
     # 1. Remplacer le link CSS externe par <style> inline
+    css_block = '<style>\n' + css + '\n</style>'
     html = re.sub(
         r'<link rel="stylesheet" href="css/styles.css"\s*/?>',
-        '<style>\n' + css + '\n</style>',
+        lambda m: css_block,
         html,
     )
     # 2. Retirer le manifest et icônes (le standalone est offline pur)
@@ -36,9 +42,10 @@ def main():
     html = re.sub(r'<link rel="apple-touch-icon"[^>]*>\s*', '', html)
 
     # 3. Remplacer les <script src=...> par un seul script inline
+    js_block = '\n<script>\n' + js_combined + '\n</script>\n'
     html = re.sub(
         r'(\s*<script src="js/[^"]+"></script>\s*)+',
-        '\n<script>\n' + js_combined + '\n</script>\n',
+        lambda m: js_block,
         html,
         count=1,
     )
